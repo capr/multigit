@@ -1,0 +1,7 @@
+# .gitignore file for multigit, auto-configured on first clone.
+
+*
+!/.multigit/
+!/.multigit/.exclude
+!/git
+!/git.cmd

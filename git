@@ -1,0 +1,297 @@
+#!/bin/sh
+
+
+usage() {
+	[ "$1" ] && {
+		echo
+		echo "ERROR: $1"
+		echo
+		exit
+	}
+	echo
+	echo " Multigit 0.1 - git wrapper for working with overlaid repos."
+	echo " Written by Cosmin Apreutesei. Public Domain."
+	echo
+	echo " USAGE:"
+	echo
+	echo "   $0 ls-all                          list all known packages"
+	echo "   $0 ls-uncloned                     list not yet cloned packages"
+	echo "   $0 ls-cloned                       list cloned packages"
+	echo "   $0 ls-modified                     list packages that were modified locally"
+	echo "   $0 ls-unpushed                     list packages that are ahead of origin"
+	echo "   $0 ls-untracked                    list files untracked by any repo"
+	echo "   $0 ls-double-tracked               list files tracked by multiple repos"
+	echo "   $0 clone <package> [origin | url]  clone a package"
+	echo "   $0 clone-all [fetch-options]       clone all uncloned packages"
+	echo "   $0 unclone <package>               remove a cloned package from disk (!)"
+	echo "   $0 <package>|--all up [message]    add/commit/push combo"
+	echo "   $0 <package>|--all uptag           update current tag to point to current commit"
+	echo "   $0 <package>|--all ver             show package version"
+	echo "   $0 <package>|--all clear-history   clear the entire history of the current branch (!)"
+	echo "   $0 <package>|--all update-perms    chmod+x all .sh files in package (in git)"
+	echo "   $0 <package>|--all make-symlinks   make symbolic links in .multigit/<package>"
+	echo "   $0 <package>|--all make-hardlinks  make hard links in .multigit/<package>"
+	echo "   $0 <package>|--all command ...     execute any git command on a package repo"
+	echo "   $0 <package>                       start a git subshell for a package repo"
+	echo "   $0 platform                        show current platform"
+	echo "   $0 [help|--help]                   this screen"
+	echo
+	exit
+}
+
+list_known() {
+	(cd .multigit && \
+	for f in *.origin; do
+		echo "${f%.origin}"
+	done)
+}
+
+list_cloned() {
+   (cd .multigit && \
+	for f in *; do
+		[ -d "$f/.git" ] && echo "$f"
+	done)
+}
+
+list_uncloned() {
+	(cd .multigit
+	for f in *.origin; do
+		f=${f%.origin}
+		[ ! -d "$f/.git" ] && echo $f
+	done)
+}
+
+foreach_cloned() {
+	for package in `list_cloned`; do
+		"$0" "$package" "$@"
+	done
+}
+
+list_modified() {
+	foreach_cloned status -s
+}
+
+list_unpushed() {
+	local cmd="git rev-list HEAD...origin/master --count"
+	for package in `list_cloned`; do
+		[ "$(GIT_DIR=".multigit/$package/.git" $cmd)" != "0" ] && echo "$package"
+	done
+}
+
+tracked_files() {
+	(git ls-files
+	for package in `list_cloned`; do
+		GIT_DIR=".multigit/$package/.git" git ls-files
+	done) | sort | uniq $1
+}
+
+existing_files() {
+	(for f in *; do
+		[ -f "$f" ] && echo "$f"
+	done) | sort | uniq
+}
+
+list_untracked() {
+	tracked=$$-1.tmp
+	existing=$$-2.tmp
+	tracked_files > $tracked
+	existing_files > $existing
+	comm -23 $existing $tracked
+	rm $tracked $existing
+}
+
+list_double_tracked() {
+	tracked_files -d
+}
+
+clone_all() {
+	export GIT_FETCH_OPTS="$@"
+	for package in `list_uncloned`; do
+		"$0" clone "$package"
+	done
+}
+
+clone() {
+	[ "$1" ] || usage "Package name expected."
+	[ ! -d ".multigit/$1/.git" ] || usage "Package \"$1\" already cloned."
+
+	if [ "$2" = "" ]; then
+		[ -f ".multigit/$1.origin" ] || usage "File not found \".multigit/$1.origin\"."
+		o=$(cat .multigit/$1.origin)
+		if [ -f .multigit/$o.baseurl ]; then
+			baseurl=$(cat .multigit/$o.baseurl); url=$baseurl$1
+		else
+			url=$o
+		fi
+	else
+		origin=$2
+		if [ -f ".multigit/$origin.baseurl" ]; then
+			baseurl=$(cat .multigit/$origin.baseurl); url=$baseurl$1
+		else
+			url=$origin
+		fi
+	fi
+
+	# set the .gitignore file for multigit on the first clone operation.
+	git config core.excludesfile .multigit/.exclude
+
+	mkdir -p ".multigit/$1"
+	export GIT_DIR=".multigit/$1/.git"
+
+	git init
+	git config --local core.worktree ../../..
+	git config --local core.excludesfile ".multigit/$1.exclude"
+	git remote add origin "$url"
+	git fetch $GIT_FETCH_OPTS || {
+		rm -rf ".multigit/$1/.git"
+		usage "git fetch error."
+	}
+	git branch --track master origin/master
+	git checkout
+
+	# register the package if new
+	[ "$origin" ] && echo $origin > .multigit/$1.origin
+}
+
+unclone() {
+	[ "$1" ] || usage "Missing package."
+	[ -d ".multigit/$1/.git" ] || usage "Package not found \"$1\"."
+
+	files="$(GIT_DIR=".multigit/$1/.git" git ls-tree -r --name-only HEAD)"
+
+	# remove files
+	for file in $files; do
+		rm "$file"
+	done
+
+	# remove empty directories
+	for file in $files; do
+		echo "$(dirname "$file")"
+	done | uniq | while read dir; do
+		[ "$dir" != "." ] && /bin/rmdir -p "$dir" 2>/dev/null
+	done
+
+	# remove the git dir
+	rm -rf ".multigit/$1/.git"
+	rmdir ".multigit/$1"
+}
+
+platform() {
+	[ "$PROCESSOR_ARCHITECTURE" = "AMD64" -o "$PROCESSOR_ARCHITEW6432" = "AMD64" ] && echo mingw64 || {
+		[ "$OSTYPE" = "msys" ] && echo mingw32 || {
+			local a=32
+			[ "$(uname -m)" = "x86_64" ] && a=64
+			[ "${OSTYPE#darwin}" != "$OSTYPE" ] && echo osx$a || echo linux$a
+		}
+	}
+}
+
+git_shell() {
+	echo "Entering subshell: git commands will work on package \"$MULTIGIT_PACKAGE\"."
+	echo "Type \`exit' to exit subshell."
+	git status -s
+	echo
+	PS1="[$MULTIGIT_PACKAGE] \u@\h:\w\$ " $SHELL -i
+}
+
+git_up() {
+	msg="$1"
+	[ "$msg" ] || msg="unimportant"
+	git add -A
+	git commit -m "$msg"
+	git push
+}
+
+git_uptag() {
+	local tag="$(git describe --tags --abbrev=0)"
+	[ "$tag" ] || usage "No current tag to update. Make a tag first."
+	git tag -f "$tag"
+	git push -f --tags
+}
+
+git_ver() {
+	printf "%-20s" "$MULTIGIT_PACKAGE"
+	git describe --tags --long --always
+}
+
+git_clear_history() {
+	local branch="$(git rev-parse --abbrev-ref HEAD)"
+	git checkout --orphan delete_me
+	git add -A
+	git commit -m "init (history cleared)"
+	git branch -D "$branch"
+	git branch -m "$branch"
+}
+
+git_update_perms() {
+	git ls-files | \
+		while read f; do
+			[ "${f##*.}" = "sh" ] && \
+				git update-index --chmod=+x "$f"
+		done
+}
+
+git_remove_links() {
+	([ "$MULTIGIT_PACKAGE" ] && cd ".multigit/$MULTIGIT_PACKAGE" || exit 1
+	find . ! -path './.git/*' ! -path './.git' ! -path '.' -exec rm -rf {} \; 2>/dev/null)
+}
+git_make_hardlinks() {
+	git_remove_links
+	git ls-files | while read f; do
+		mkdir -p "$(dirname ".multigit/$MULTIGIT_PACKAGE/$f")"
+		ln -f "$f" ".multigit/$MULTIGIT_PACKAGE/$f"
+	done
+}
+git_make_symlinks() {
+	git_remove_links
+	git ls-files | while read f; do
+		mkdir -p "$(dirname ".multigit/$MULTIGIT_PACKAGE/$f")"
+		ln -sf "$PWD/$f" ".multigit/$MULTIGIT_PACKAGE/$f"
+	done
+}
+
+git_cmd() {
+	[ "$1" = "--all" -o "$1" = "-a" ] && {
+		shift
+		[ "$@" ] || usage "Refusing to start a subshell for each package."
+		foreach_cloned "$@"
+		exit
+	}
+
+	local pkg="$MULTIGIT_PACKAGE"
+	[ "$pkg" ] || { pkg="$1"; shift; }
+
+	export GIT_DIR=".multigit/$pkg/.git"
+	export MULTIGIT_PACKAGE="$pkg"
+	[ -d "$GIT_DIR" ] || usage "Unknown package \"$pkg\"."
+
+	[ "$1" ] || { git_shell; exit; }
+	[ "$1" = "up" ] && { git_up "$2"; exit; }
+	[ "$1" = "uptag" ] && { git_uptag; exit; }
+	[ "$1" = "ver" ] && { git_ver; exit; }
+	[ "$1" = "clear-history" ] && { git_clear_history; exit; }
+	[ "$1" = "update-perms" ] && { git_update_perms; exit; }
+	[ "$1" = "make-symlinks" ] && { git_make_symlinks; exit; }
+	[ "$1" = "make-hardlinks" ] && { git_make_hardlinks; exit; }
+
+	git "$@"
+}
+
+cd "$(dirname "$0")" || usage "Could not change dir to \"$(dirname "$0")\"."
+
+[ "$1" ] || usage
+[ "$1" = "help" ] && usage
+[ "$1" = "--help" ] && usage
+[ "$1" = "ls-all" ] && { list_known; exit; }
+[ "$1" = "ls-cloned" ] && { list_cloned; exit; }
+[ "$1" = "ls-uncloned" ] && { list_uncloned; exit; }
+[ "$1" = "ls-modified" ] && { list_modified; exit; }
+[ "$1" = "ls-unpushed" ] && { list_unpushed; exit; }
+[ "$1" = "ls-untracked" ] && { list_untracked; exit; }
+[ "$1" = "ls-double-tracked" ] && { list_double_tracked; exit; }
+[ "$1" = "clone" ] && { shift; clone "$@"; exit; }
+[ "$1" = "clone-all" ] && { shift; clone_all "$@"; exit; }
+[ "$1" = "unclone" ] && { shift; unclone "$@"; exit; }
+[ "$1" = "platform" ] && { platform; exit; }
+
+git_cmd "$@"
