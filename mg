@@ -8,32 +8,38 @@ usage() {
 		exit
 	}
 	echo
-	echo " Multigit 1.0 - git wrapper for working with overlaid repos."
+	echo " MultiGit 1.0 - git wrapper for working with overlaid repos."
 	echo " Written by Cosmin Apreutesei. Public Domain."
 	echo " Developed at https://github.com/capr/multigit"
 	echo
-	echo " USAGE: $ZERO ..."
+	echo " USAGE: mg ..."
 	echo
-	echo "   ls-all                     list all known packages"
-	echo "   ls-uncloned                list not yet cloned packages"
-	echo "   ls-cloned                  list cloned packages"
-	echo "   ls-modified                list packages that were modified locally"
-	echo "   ls-unpushed                list packages that are ahead of origin"
-	echo "   ls-untracked               list files untracked by any repo"
-	echo "   ls-double-tracked          list files tracked by multiple repos"
-	echo "   clone [origin/]pkg|url ... clone packages"
-	echo "   clone-all [fetch-options]  clone all uncloned packages"
-	echo "   unclone pkg ...            remove cloned packages from disk (!)"
-	echo "   pkg|--all up [message]     add/commit/push combo"
-	echo "   pkg|--all uptag            update current tag to point to current commit"
-	echo "   pkg|--all ver[sion]        show package version"
-	echo "   pkg|--all clear-history    clear the history of the current branch (!)"
-	echo "   pkg|--all update-perms     chmod+x all .sh files in package (in git)"
-	echo "   pkg|--all make-symlinks    make symbolic links in .multigit/pkg"
-	echo "   pkg|--all make-hardlinks   make hard links in .multigit/pkg"
-	echo "   pkg|--all command ...      execute any git command on a package repo"
-	echo "   pkg                        start a git subshell for a package repo"
-	echo "   [help|--help]              show this screen"
+	echo "   ls                          list cloned repos"
+	echo "   ls-all                      list all known repos"
+	echo "   ls-uncloned                 list all known but not cloned repos"
+	echo "   ls-modified                 list repos that were modified locally"
+	echo "   ls-unpushed                 list repos that are ahead of origin"
+	echo "   ls-untracked                list files untracked by any repo"
+	echo "   ls-double-tracked           list files tracked by multiple repos"
+	echo
+	echo "   clone [origin/]repo|url ... clone repos"
+	echo "   clone-all [fetch-options]   clone all uncloned repos"
+	echo "   unclone repo ...            remove cloned repos from disk (!)"
+	echo
+	echo "   baseurl [origin] [url]      get or set the baseurl for an origin"
+	echo "   origin [repo] [origin|url]  get or set the default origin for a repo"
+	echo
+	echo "   repo|--all up [message]     add/commit/push combo"
+	echo "   repo|--all uptag            update current tag to point to current commit"
+	echo "   repo|--all ver[sion]        show repo version"
+	echo "   repo|--all clear-history    clear the history of the current branch (!)"
+	echo "   repo|--all update-perms     git-chmod +x all .sh files in repo"
+	echo "   repo|--all make-symlinks    make symbolic links in .multigit/repo"
+	echo "   repo|--all make-hardlinks   make hard links in .multigit/repo"
+	echo "   repo|--all command ...      execute any git command on a repo"
+	echo "   repo                        start a git subshell for a repo"
+	echo
+	echo "   [help|--help]               show this screen"
 	echo
 	exit
 }
@@ -61,8 +67,8 @@ list_uncloned() {
 }
 
 git_cmd_all() {
-	for package in `list_cloned`; do
-		git_cmd "$package" "$@"
+	for repo in `list_cloned`; do
+		git_cmd "$repo" "$@"
 	done
 }
 
@@ -72,20 +78,20 @@ list_modified() {
 
 list_unpushed() {
 	local cmd="git rev-list HEAD...origin/master --count"
-	for package in `list_cloned`; do
-		[ "$(GIT_DIR=".multigit/$package/.git" $cmd)" != "0" ] && echo "$package"
+	for repo in `list_cloned`; do
+		[ "$(GIT_DIR=".multigit/$repo/.git" $cmd)" != "0" ] && echo "$repo"
 	done
 }
 
 tracked_files() {
 	(git ls-files
-	for package in `list_cloned`; do
-		GIT_DIR=".multigit/$package/.git" git ls-files
+	for repo in `list_cloned`; do
+		GIT_DIR=".multigit/$repo/.git" git ls-files
 	done) | sort | uniq $1
 }
 
 existing_files() {
-	find * -type f | sort | uniq
+	find * -type f | grep -v \.tmp$ | sort | uniq
 }
 
 list_untracked() {
@@ -103,8 +109,8 @@ list_double_tracked() {
 
 clone_all() {
 	export MULTIGIT_FETCH_OPTS="$@"
-	for package in `list_uncloned`; do
-		./git clone "$package"
+	for repo in `list_uncloned`; do
+		./mg clone "$repo"
 	done
 }
 
@@ -115,9 +121,8 @@ clone_one() {
 	local rorigin
 	local url
 
-	# trim arg
-	arg=${arg# *}
-	arg=${arg%* }
+	# spaces not allowed
+	arg=${arg//[[:blank:]]/}
 
 	# check if the arg is a full url or just `[origin/]name`
 	if [ "${arg#*:}" != "$arg" ]; then
@@ -133,9 +138,9 @@ clone_one() {
 
 	# check that the name does not contain spaces or is made of slashes
 	[ "$arg" = "$1" -a "$name" ] || \
-		usage "Invalid package name \"$1\"."
+		usage "Invalid repo name \"$1\"."
 
-	# check that the package is not already cloned
+	# check that the repo is not already cloned
 	[ -d ".multigit/$name/.git" ] && {
 		echo "ERROR: Already cloned: \"$name\"."
 		return
@@ -147,7 +152,7 @@ clone_one() {
 
 	# decide the origin
 	if [ "$origin" ]; then
-		[ "$origin" = "$rorigin" ] || \
+		[ -z "$rorigin" -o "$origin" = "$rorigin" ] || \
 			echo "Cloning \"$name\" from different origin \"$origin\" (was \"$rorigin\")."
 	else
 		origin=$rorigin
@@ -167,7 +172,7 @@ clone_one() {
 			if [ "${origin#*:}" != "$origin" ]; then
 				url=$origin
 			else
-				echo "ERROR: Unknown origin: \"$origin\"."
+				echo "ERROR: Unknown origin: \"$origin\" for \"$name\"."
 				return
 			fi
 		fi
@@ -176,7 +181,7 @@ clone_one() {
 	# set the .gitignore file for multigit on the first clone operation.
 	git config core.excludesfile .multigit/.exclude
 
-	# finally, clone the package
+	# finally, clone the repo
 	mkdir -p ".multigit/$name"
 	export GIT_DIR=".multigit/$name/.git"
 	git init
@@ -194,7 +199,7 @@ clone_one() {
 	# make an "exclude-all" exclude file if one is not present
 	[ -f ".multigit/$name.exclude" ] || echo '*' > ".multigit/$name.exclude"
 
-	# if fetch was successful, (re)register the origin for the package
+	# if fetch was successful, (re)register the origin for the repo
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
 			echo "NOTE: Updating origin for \"$name\": \"$origin\" (was \"$rorigin\")"
@@ -206,7 +211,7 @@ clone_one() {
 }
 
 clone() {
-	[ "$1" ] || usage "Package name expected."
+	[ "$1" ] || usage "Repo name expected."
 	if [ $# = 1 ]; then
 		clone_one "$@"
 	else
@@ -219,11 +224,11 @@ clone() {
 
 unclone_one() {
 	[ -d ".multigit/$1/.git" ] || {
-		echo "ERROR: package not found \"$1\"."
+		echo "ERROR: repo not found \"$1\"."
 		return
 	}
 
-	# get tracked files for this package
+	# get tracked files for this repo
 	files="$(GIT_DIR=".multigit/$1/.git" git ls-tree -r --name-only HEAD)" || {
 		echo "ERROR: could not get files for \"$1\"."
 		return
@@ -242,14 +247,13 @@ unclone_one() {
 	done
 
 	# remove the git dir
-	rm -rf ".multigit/$1/.git"
-	rmdir ".multigit/$1"
+	rm -rf ".multigit/$1/"
 
 	echo "Removed: \"$1\"."
 }
 
 unclone() {
-	[ "$1" ] || usage "Package name expected."
+	[ "$1" ] || usage "Repo name expected."
 	[ "$GIT_DIR" ] && usage "Refusing to unclone from a subshell."
 	if [ $# = 1 ]; then
 		unclone_one "$@"
@@ -261,16 +265,62 @@ unclone() {
 	fi
 }
 
+baseurl() {
+	[ "$1" ] || {
+		for f in .multigit/*.baseurl; do
+			f=${f#.multigit/}
+			f=${f%.baseurl}
+			printf "%-20s %s\n" "$f" "$(baseurl "$f")"
+		done
+		return
+	}
+	local origin=$1
+	local url=$2
+	# spaces not allowed
+	origin=${origin//[[:blank:]]/}
+	url=${url//[[:blank:]]/}
+	[ -z "$1" -o "$1" != "$origin" ] && usage "Invalid origin name \"$1\"."
+	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl \"$2\"."
+	if [ "$url" ]; then
+		echo "$url" > ".multigit/$origin.baseurl"
+	else
+		cat ".multigit/$origin.baseurl"
+	fi
+}
+
+origin() {
+	[ "$1" ] || {
+		for f in .multigit/*.origin; do
+			f=${f#.multigit/}
+			f=${f%.origin}
+			printf "%-20s %s\n" "$f" "$(origin "$f")"
+		done
+		return
+	}
+	local repo=$1
+	local origin=$2
+	# spaces not allowed
+	repo=${repo//[[:blank:]]/}
+	origin=${origin//[[:blank:]]/}
+	[ -z "$1" -o "$1" != "$repo" ] && usage "Invalid repo name \"$1\"."
+	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin \"$2\"."
+	if [ "$origin" ]; then
+		echo "$origin" > ".multigit/$repo.origin"
+	else
+		cat ".multigit/$repo.origin"
+	fi
+}
+
 git_shell() {
-	echo "Entering subshell: git commands will work on package \"$MULTIGIT_PACKAGE\"."
+	echo "Entering subshell: git commands will work on repo \"$MULTIGIT_REPO\"."
 	echo "Type \`exit' to exit subshell."
 	git status -s
 	echo
 	if [ "$OSTYPE" = "msys" ]; then
-		export PROMPT="[$MULTIGIT_PACKAGE] \$P\$G"
+		export PROMPT="[$MULTIGIT_REPO] \$P\$G"
 		exec "$COMSPEC" /k
 	else
-		export PS1="[$MULTIGIT_PACKAGE] \u@\h:\w\$ "
+		export PS1="[$MULTIGIT_REPO] \u@\h:\w\$ "
 		exec "$SHELL" -i
 	fi
 }
@@ -291,7 +341,7 @@ git_uptag() {
 }
 
 git_ver() {
-	printf "%-20s" "$MULTIGIT_PACKAGE"
+	printf "%-20s" "$MULTIGIT_REPO"
 	git describe --tags --long --always
 }
 
@@ -313,63 +363,67 @@ git_update_perms() {
 }
 
 git_remove_links() {
-	[ "$OSTYPE" = "msys" ] && "Not for Windows."
-	([ "$MULTIGIT_PACKAGE" ] && cd ".multigit/$MULTIGIT_PACKAGE" || exit 1
+	[ "$OSTYPE" = "msys" ] && usage "Not for Windows."
+	([ "$MULTIGIT_REPO" ] && cd ".multigit/$MULTIGIT_REPO" || exit 1
 	find . ! -path './.git/*' ! -path './.git' ! -path '.' -exec rm -rf {} \; 2>/dev/null)
 }
 git_make_hardlinks() {
 	git_remove_links
 	git ls-files | while read f; do
-		mkdir -p "$(dirname ".multigit/$MULTIGIT_PACKAGE/$f")"
-		ln -f "$f" ".multigit/$MULTIGIT_PACKAGE/$f"
+		mkdir -p "$(dirname ".multigit/$MULTIGIT_REPO/$f")"
+		ln -f "$f" ".multigit/$MULTIGIT_REPO/$f"
 	done
 }
 git_make_symlinks() {
 	git_remove_links
 	git ls-files | while read f; do
-		mkdir -p "$(dirname ".multigit/$MULTIGIT_PACKAGE/$f")"
-		ln -sf "$PWD/$f" ".multigit/$MULTIGIT_PACKAGE/$f"
+		mkdir -p "$(dirname ".multigit/$MULTIGIT_REPO/$f")"
+		ln -sf "$PWD/$f" ".multigit/$MULTIGIT_REPO/$f"
 	done
 }
 
 git_cmd() {
-	pkg="$1"; shift
-
-	export GIT_DIR=".multigit/$pkg/.git"
-	export MULTIGIT_PACKAGE="$pkg"
-	[ -d "$GIT_DIR" ] || usage "Unknown package: \"$pkg\"."
-
-	[ "$1" ] || { git_shell; return; }
-	[ "$1" = "up" ] && { git_up "$2"; return; }
-	[ "$1" = "uptag" ] && { git_uptag; return; }
-	[ "$1" = "ver" -o "$1" = "version" ] && { git_ver; return; }
-	[ "$1" = "clear-history" ] && { git_clear_history; return; }
-	[ "$1" = "update-perms" ] && { git_update_perms; return; }
-	[ "$1" = "make-symlinks" ] && { git_make_symlinks; return; }
-	[ "$1" = "make-hardlinks" ] && { git_make_hardlinks; return; }
-
-	git "$@"
+	repo="$1"; shift
+	export GIT_DIR=".multigit/$repo/.git"
+	export MULTIGIT_REPO="$repo"
+	[ -d "$GIT_DIR" ] || usage "Unknown repo: \"$repo\"."
+	case "$1" in
+		up)             git_up "$2" ;;
+		uptag)          git_uptag ;;
+		ver)            git_ver ;;
+		version)        git_ver ;;
+		clear-history)  git_clear_history ;;
+		update-perms)   git_update_perms ;;
+		make-symlinks)  git_make_symlinks ;;
+		make-hardlinks) git_make_hardlinks ;;
+		"")             git_shell ;;
+		*)              git "$@" ;;
+	esac
+	export GIT_DIR=
+	export MULTIGIT_REPO=
 }
 
-[ "$ZERO" ] || ZERO="$0" # for wrapping
 cd "${0%mg}" || usage "Could not change dir to \"${0%mg}\"."
 
-[ -z "$1" -o "$1" = "help" -o "$1" = "--help" ] && usage
-[ "$1" = "ls-all" ] && { list_known; exit; }
-[ "$1" = "ls-cloned" ] && { list_cloned; exit; }
-[ "$1" = "ls-uncloned" ] && { list_uncloned; exit; }
-[ "$1" = "ls-modified" ] && { list_modified; exit; }
-[ "$1" = "ls-unpushed" ] && { list_unpushed; exit; }
-[ "$1" = "ls-untracked" ] && { list_untracked; exit; }
-[ "$1" = "ls-double-tracked" ] && { list_double_tracked; exit; }
-[ "$1" = "clone" ] && { shift; clone "$@"; exit; }
-[ "$1" = "clone-all" ] && { shift; clone_all "$@"; exit; }
-[ "$1" = "unclone" ] && { shift; unclone "$@"; exit; }
-[ "$1" = "--all" ] && {
-	shift
-	[ "$@" ] || usage "Refusing to start a subshell for each package."
-	git_cmd_all "$@"
-	exit
-}
-
-git_cmd "$@"
+case "$1" in
+	"")           usage ;;
+	help)         usage ;;
+	--help)       usage ;;
+	ls)           list_cloned ;;
+	ls-all)       list_known ;;
+	ls-uncloned)  list_uncloned ;;
+	ls-modified)  list_modified ;;
+	ls-unpushed)  list_unpushed ;;
+	ls-untracked) list_untracked ;;
+	ls-double-tracked) list_double_tracked ;;
+	clone)   shift; clone "$@" ;;
+	unclone) shift; unclone "$@" ;;
+	baseurl) shift; baseurl "$@" ;;
+	origin)  shift; origin "$@" ;;
+	--all)
+		shift
+		[ "$@" ] || usage "Refusing to start a subshell for each repo."
+		git_cmd_all "$@"
+		;;
+	*) git_cmd "$@" ;;
+esac
