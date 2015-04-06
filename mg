@@ -10,30 +10,30 @@ usage() {
 	echo
 	echo " Multigit 1.0 - git wrapper for working with overlaid repos."
 	echo " Written by Cosmin Apreutesei. Public Domain."
-	echo " See https://github.com/capr/multigit for info."
+	echo " Developed at https://github.com/capr/multigit"
 	echo
 	echo " USAGE: $ZERO ..."
 	echo
-	echo "   ls-all                       list all known packages"
-	echo "   ls-uncloned                  list not yet cloned packages"
-	echo "   ls-cloned                    list cloned packages"
-	echo "   ls-modified                  list packages that were modified locally"
-	echo "   ls-unpushed                  list packages that are ahead of origin"
-	echo "   ls-untracked                 list files untracked by any repo"
-	echo "   ls-double-tracked            list files tracked by multiple repos"
-	echo "   clone [origin/]pkg | url ... clone packages"
-	echo "   clone-all [fetch-options]    clone all uncloned packages"
-	echo "   unclone pkg1 ...             remove cloned packages from disk (!)"
-	echo "   pkg|--all up [message]       add/commit/push combo"
-	echo "   pkg|--all uptag              update current tag to point to current commit"
-	echo "   pkg|--all ver[sion]          show package version"
-	echo "   pkg|--all clear-history      clear the entire history of the current branch (!)"
-	echo "   pkg|--all update-perms       chmod+x all .sh files in package (in git)"
-	echo "   pkg|--all make-symlinks      make symbolic links in .multigit/pkg"
-	echo "   pkg|--all make-hardlinks     make hard links in .multigit/pkg"
-	echo "   pkg|--all command ...        execute any git command on a package repo"
-	echo "   pkg                          start a git subshell for a package repo"
-	echo "   [help|--help]                show this screen"
+	echo "   ls-all                     list all known packages"
+	echo "   ls-uncloned                list not yet cloned packages"
+	echo "   ls-cloned                  list cloned packages"
+	echo "   ls-modified                list packages that were modified locally"
+	echo "   ls-unpushed                list packages that are ahead of origin"
+	echo "   ls-untracked               list files untracked by any repo"
+	echo "   ls-double-tracked          list files tracked by multiple repos"
+	echo "   clone [origin/]pkg|url ... clone packages"
+	echo "   clone-all [fetch-options]  clone all uncloned packages"
+	echo "   unclone pkg ...            remove cloned packages from disk (!)"
+	echo "   pkg|--all up [message]     add/commit/push combo"
+	echo "   pkg|--all uptag            update current tag to point to current commit"
+	echo "   pkg|--all ver[sion]        show package version"
+	echo "   pkg|--all clear-history    clear the history of the current branch (!)"
+	echo "   pkg|--all update-perms     chmod+x all .sh files in package (in git)"
+	echo "   pkg|--all make-symlinks    make symbolic links in .multigit/pkg"
+	echo "   pkg|--all make-hardlinks   make hard links in .multigit/pkg"
+	echo "   pkg|--all command ...      execute any git command on a package repo"
+	echo "   pkg                        start a git subshell for a package repo"
+	echo "   [help|--help]              show this screen"
 	echo
 	exit
 }
@@ -60,14 +60,14 @@ list_uncloned() {
 	done)
 }
 
-foreach_cloned() {
+git_cmd_all() {
 	for package in `list_cloned`; do
-		"$0" "$package" "$@"
+		git_cmd "$package" "$@"
 	done
 }
 
 list_modified() {
-	foreach_cloned status -s
+	git_cmd_all status -s
 }
 
 list_unpushed() {
@@ -85,9 +85,7 @@ tracked_files() {
 }
 
 existing_files() {
-	(for f in *; do
-		[ -f "$f" ] && echo "$f"
-	done) | sort | uniq
+	find * -type f | sort | uniq
 }
 
 list_untracked() {
@@ -106,7 +104,7 @@ list_double_tracked() {
 clone_all() {
 	export MULTIGIT_FETCH_OPTS="$@"
 	for package in `list_uncloned`; do
-		"$0" clone "$package"
+		./git clone "$package"
 	done
 }
 
@@ -154,7 +152,7 @@ clone_one() {
 	else
 		origin=$rorigin
 		[ "$origin" ] || {
-			echo "ERROR: Missing origin in \".multigit/$name.origin\"."
+			echo "ERROR: Missing origin for \"$name\": \".multigit/$name.origin\"."
 			return
 		}
 	fi
@@ -269,10 +267,11 @@ git_shell() {
 	git status -s
 	echo
 	if [ "$OSTYPE" = "msys" ]; then
-		export PROMPT="[$MULTIGIT_PACKAGE] $P$G"
+		export PROMPT="[$MULTIGIT_PACKAGE] \$P\$G"
 		exec "$COMSPEC" /k
 	else
-		PS1="[$MULTIGIT_PACKAGE] \u@\h:\w\$ " $SHELL -i
+		export PS1="[$MULTIGIT_PACKAGE] \u@\h:\w\$ "
+		exec "$SHELL" -i
 	fi
 }
 
@@ -314,6 +313,7 @@ git_update_perms() {
 }
 
 git_remove_links() {
+	[ "$OSTYPE" = "msys" ] && "Not for Windows."
 	([ "$MULTIGIT_PACKAGE" ] && cd ".multigit/$MULTIGIT_PACKAGE" || exit 1
 	find . ! -path './.git/*' ! -path './.git' ! -path '.' -exec rm -rf {} \; 2>/dev/null)
 }
@@ -333,34 +333,26 @@ git_make_symlinks() {
 }
 
 git_cmd() {
-	[ "$1" = "--all" ] && {
-		shift
-		[ "$@" ] || usage "Refusing to start a subshell for each package."
-		foreach_cloned "$@"
-		exit
-	}
-
-	local pkg="$MULTIGIT_PACKAGE"
-	[ "$pkg" ] || { pkg="$1"; shift; }
+	pkg="$1"; shift
 
 	export GIT_DIR=".multigit/$pkg/.git"
 	export MULTIGIT_PACKAGE="$pkg"
 	[ -d "$GIT_DIR" ] || usage "Unknown package: \"$pkg\"."
 
-	[ "$1" ] || { git_shell; exit; }
-	[ "$1" = "up" ] && { git_up "$2"; exit; }
-	[ "$1" = "uptag" ] && { git_uptag; exit; }
-	[ "$1" = "ver" -o "$1" = "version" ] && { git_ver; exit; }
-	[ "$1" = "clear-history" ] && { git_clear_history; exit; }
-	[ "$1" = "update-perms" ] && { git_update_perms; exit; }
-	[ "$1" = "make-symlinks" ] && { git_make_symlinks; exit; }
-	[ "$1" = "make-hardlinks" ] && { git_make_hardlinks; exit; }
+	[ "$1" ] || { git_shell; return; }
+	[ "$1" = "up" ] && { git_up "$2"; return; }
+	[ "$1" = "uptag" ] && { git_uptag; return; }
+	[ "$1" = "ver" -o "$1" = "version" ] && { git_ver; return; }
+	[ "$1" = "clear-history" ] && { git_clear_history; return; }
+	[ "$1" = "update-perms" ] && { git_update_perms; return; }
+	[ "$1" = "make-symlinks" ] && { git_make_symlinks; return; }
+	[ "$1" = "make-hardlinks" ] && { git_make_hardlinks; return; }
 
 	git "$@"
 }
 
 [ "$ZERO" ] || ZERO="$0" # for wrapping
-cd "$(dirname "$0")" || usage "Could not change dir to \"$(dirname "$0")\"."
+cd "${0%mg}" || usage "Could not change dir to \"${0%mg}\"."
 
 [ -z "$1" -o "$1" = "help" -o "$1" = "--help" ] && usage
 [ "$1" = "ls-all" ] && { list_known; exit; }
@@ -373,5 +365,11 @@ cd "$(dirname "$0")" || usage "Could not change dir to \"$(dirname "$0")\"."
 [ "$1" = "clone" ] && { shift; clone "$@"; exit; }
 [ "$1" = "clone-all" ] && { shift; clone_all "$@"; exit; }
 [ "$1" = "unclone" ] && { shift; unclone "$@"; exit; }
+[ "$1" = "--all" ] && {
+	shift
+	[ "$@" ] || usage "Refusing to start a subshell for each package."
+	git_cmd_all "$@"
+	exit
+}
 
 git_cmd "$@"
