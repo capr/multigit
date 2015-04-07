@@ -1,4 +1,5 @@
 #!/bin/sh
+shopt -s nullglob
 
 usage() {
 	[ "$1" ] && {
@@ -8,38 +9,44 @@ usage() {
 		exit
 	}
 	echo
-	echo " MultiGit 1.0 - git wrapper for working with overlaid repos."
+	echo " multigit 1.0 - git wrapper for working with overlaid repos."
 	echo " Written by Cosmin Apreutesei. Public Domain."
 	echo " Developed at https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mg ..."
 	echo
-	echo "   ls                          list cloned repos"
-	echo "   ls-all                      list all known repos"
-	echo "   ls-uncloned                 list all known but not cloned repos"
-	echo "   ls-modified                 list repos that were modified locally"
-	echo "   ls-unpushed                 list repos that are ahead of origin"
-	echo "   ls-untracked                list files untracked by any repo"
-	echo "   ls-double-tracked           list files tracked by multiple repos"
+	echo "   ls                           list cloned repos"
+	echo "   ls-all                       list all known repos"
+	echo "   ls-uncloned                  list all known but not cloned repos"
+	echo "   ls-unpushed                  list repos that are ahead of origin"
 	echo
-	echo "   clone [origin/]repo|url ... clone repos"
-	echo "   clone-all [fetch-options]   clone all uncloned repos"
-	echo "   unclone repo ...            remove cloned repos from disk (!)"
+	echo "   ls-modified                  list files that were modified locally"
+	echo "   ls-untracked                 list files untracked by any repo"
+	echo "   ls-double-tracked            list files tracked by multiple repos"
 	echo
-	echo "   baseurl [origin] [url]      get or set the baseurl for an origin"
-	echo "   origin [repo] [origin|url]  get or set the default origin for a repo"
+	echo "   clone [ORIGIN/]REPO|URL ...  clone repos"
+	echo "   clone-all [fetch-options]    clone all uncloned repos"
+	echo "   unclone REPO ...             remove cloned repos from disk (!)"
 	echo
-	echo "   repo|--all up [message]     add/commit/push combo"
-	echo "   repo|--all uptag            update current tag to point to current commit"
-	echo "   repo|--all ver[sion]        show repo version"
-	echo "   repo|--all clear-history    clear the history of the current branch (!)"
-	echo "   repo|--all update-perms     git-chmod +x all .sh files in repo"
-	echo "   repo|--all make-symlinks    make symbolic links in .multigit/repo"
-	echo "   repo|--all make-hardlinks   make hard links in .multigit/repo"
-	echo "   repo|--all command ...      execute any git command on a repo"
-	echo "   repo                        start a git subshell for a repo"
+	echo "   baseurl [ORIGIN] [URL|-]     get/set/delete the baseurl of an origin"
+	echo "   origin [REPO] [ORIGIN|URL|-] get/set/delete the known origin of a repo"
 	echo
-	echo "   [help|--help]               show this screen"
+	echo "   REPO                         start a git subshell for a repo"
+	echo "   REPO|--all command ...       execute any git command on a repo"
+	echo
+	echo "   REPO|--all up [MESSAGE]      add/commit/push combo"
+	echo "   REPO|--all uptag             update latest tag to point to current commit"
+	echo "   REPO|--all ver[sion]         show repo full version (tag-N-hash)"
+	echo "   REPO|--all clear-history     clear the history of the current branch (!)"
+	echo "   REPO|--all update-perms      git-chmod +x all .sh files in repo"
+	echo "   REPO|--all make-symlinks     make symbolic links in .multigit/REPO"
+	echo "   REPO|--all make-hardlinks    make hard links in .multigit/REPO"
+	echo
+	echo "   release [REL]                show a release or list releases"
+	echo "   release REL update           create/update a release with current HEADs"
+	echo "   release REL checkout         clone/checkout repos from a release"
+	echo
+	echo "   [help|--help]                show this screen"
 	echo
 	exit
 }
@@ -276,12 +283,16 @@ baseurl() {
 	}
 	local origin=$1
 	local url=$2
+
 	# spaces not allowed
 	origin=${origin//[[:blank:]]/}
 	url=${url//[[:blank:]]/}
 	[ -z "$1" -o "$1" != "$origin" ] && usage "Invalid origin name \"$1\"."
 	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl \"$2\"."
-	if [ "$url" ]; then
+
+	if [ "X$url" = "X-" ]; then
+		rm ".multigit/$origin.baseurl"
+	elif [ "$url" ]; then
 		echo "$url" > ".multigit/$origin.baseurl"
 	else
 		cat ".multigit/$origin.baseurl"
@@ -299,16 +310,59 @@ origin() {
 	}
 	local repo=$1
 	local origin=$2
+
 	# spaces not allowed
 	repo=${repo//[[:blank:]]/}
 	origin=${origin//[[:blank:]]/}
 	[ -z "$1" -o "$1" != "$repo" ] && usage "Invalid repo name \"$1\"."
 	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin \"$2\"."
-	if [ "$origin" ]; then
+
+	if [ "X$origin" = "X-" ]; then
+		rm ".multigit/$repo.origin"
+	elif [ "$origin" ]; then
 		echo "$origin" > ".multigit/$repo.origin"
 	else
 		cat ".multigit/$repo.origin"
 	fi
+}
+
+list_releases() {
+	for f in .multigit/*.release; do
+		f=${f#.multigit/}
+		f=${f%.release}
+		echo "$f"
+	done
+}
+
+show_release() {
+	[ -f ".multigit/$1.release" ] || usage "Unknown release \"$1\"."
+	cat ".multigit/$1.release"
+}
+
+update_release() {
+	./mg --all version > ".multigit/$1.release"
+}
+
+checkout_release() {
+	local repo="$1"
+	[ -f ".multigit/$repo.release" ] || usage "Unknown release \"$repo\"."
+	cat ".multigit/$repo.release" | while read repo ver; do
+		[ -d ".multigit/$repo/.git" ] || ./mg clone "$repo"
+		./mg "$repo" checkout "$ver"
+	done
+}
+
+release() {
+	local rel="$1"
+	rel=${rel//[[:blank:]]/} # spaces not allowed
+	[ "$rel" -a "$1" != "$rel" ] && usage "Invalid release name \"$1\"."
+	[ "$rel" ] || { list_releases; return; }
+	case "$2" in
+		"")       show_release "$rel" ;;
+		update)   update_release "$rel" ;;
+		checkout) checkout_release "$rel" ;;
+		*)        usage "Invalid release commnad \"$2\"."
+	esac
 }
 
 git_shell() {
@@ -420,9 +474,10 @@ case "$1" in
 	unclone) shift; unclone "$@" ;;
 	baseurl) shift; baseurl "$@" ;;
 	origin)  shift; origin "$@" ;;
+	release) shift; release "$@" ;;
 	--all)
 		shift
-		[ "$@" ] || usage "Refusing to start a subshell for each repo."
+		[ "$1" ] || usage "Refusing to start a subshell for each repo."
 		git_cmd_all "$@"
 		;;
 	*) git_cmd "$@" ;;

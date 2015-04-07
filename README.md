@@ -1,2 +1,4 @@
 # multigit
-git wrapper for working with overlaid repositories
+
+Git wrapper for working with overlaid git repositories.
+
