@@ -1,6 +1,6 @@
 # multigit
 
-**Git wrapper for working with overlaid git repositories.**<br>
+### Git wrapper for working with overlaid git repositories.
 <sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub>
 
 Multigit allows you to check out multiple git repositories over a
