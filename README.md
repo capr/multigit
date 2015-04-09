@@ -62,7 +62,7 @@ Let's see a bare bones example:
 	$ mgit foo ls-files
 	foo.txt                        # but project foo only tracks foo.txt
 	$ mgit bar ls-files
-	bar.txt                        # while project bar only tracks bar.txt
+	bar.txt                        # and project bar only tracks bar.txt
 
 Notice the `-f` (force) when adding files to git. When creating a repo with
 `mgit init foo`, the `.gitignore` file for foo is set to
