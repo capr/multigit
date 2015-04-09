@@ -95,9 +95,9 @@ known too (they are set to `bob`), next time it will be enough to type
 ## How do I create package collections?
 
 	$ mgit init meta
-	$ mgit meta add -f .mgit/bob.baseurl
-	$ mgit meta add -f .mgit/foo.origin
-	$ mgit meta add -f .mgit/bar.origin
+	$ mgit meta add -f .multigit/bob.baseurl
+	$ mgit meta add -f .multigit/foo.origin
+	$ mgit meta add -f .multigit/bar.origin
 	$ mgit meta commit -m "bob's place; foo and bar packages"
 
 The meta repo like any other another repo (and it doesn't have to be
