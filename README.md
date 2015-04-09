@@ -30,7 +30,7 @@ as multigit is, it's still yet another script that you have to deploy.
 
 Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
 
-git init foo:
+mgit init foo:
 
 	mkdir -p .multigit/foo
 	export GIT_DIR=.multigit/foo/.git
@@ -39,9 +39,9 @@ git init foo:
 	git config --local core.excludesfile .multigit/foo.exclude  # instead of .gitignore
 	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude  # "ignore all"
 
-git foo:
+mgit foo ls-files:
 
-	GIT_DIR=.multigit/foo/.git git
+	GIT_DIR=.multigit/foo/.git git ls-files  # list files of foo
 
 ## How do I use it?
 
