@@ -33,7 +33,7 @@ Let's see a bare bones example:
 
 	$ mgit init foo                # create layered repo foo
 	$ mgit init bar                # create layered repo bar
-	$ mgit ls                      # list repos
+	$ mgit ls                      # list layered repos
 	foo
 	bar
 
@@ -63,7 +63,80 @@ appropriate to each repo. Given that all repos now share the same
 namespace, you need to be explicit about which parts of that namespace
 are "reserved" for which repos.
 
-## How does it work?
+You can use git direcly on your layered repos with a subshell:
+
+	$ mgit foo
+	[foo] $ git ls-files
+	foo.txt
+	[foo] $ exit
+	$
+
+Or you can type git commands directly without a subshell:
+
+	$ mgit foo ls-files
+	foo.txt
+
+## How do I clone repositories?
+
+	$ mkdir project
+	$ cd project
+
+	$ mgit clone https://github.com/bob/foo
+	$ mgit clone https://github.com/bob/bar
+
+This will clone both repos into the current directory
+(there's no "target directory" option).
+
+## But do I have to type the full URL every time?
+
+	$ mgit baseurl https://github.com/bob/  # adds .mgit/bob.baseurl
+	$ mgit clone bob/foo bob/bar            # adds .mgit/foo.origin and .mgit/bar.origin
+
+Now that bob is _registered_ as a remote, and both foo's and bar's origins
+are registered too (they are set to `bob`), next time it will be enough
+to type `mgit clone foo bar`. Which brings us to the next question...
+
+## How do I manage module collections?
+
+	$ mgit init meta
+	$ mgit meta add -f .mgit/bob.baseurl   # add bob's baseurl to meta
+	$ mgit meta add -f .mgit/foo.origin    # add foo's origin to meta
+	$ mgit meta add -f .mgit/bar.origin    # add bar's origin to meta
+	$ mgit meta commit -m "bob's place; foo and bar modules"
+
+The meta repo is like any other layered repo (and it doesn't have to be
+called meta either, and it doesn't have to be the only repo that contains
+meta-information). It contains the information necessary to clone
+foo and bar by name alone. So by cloning `meta` into your project
+(by it's full url), you can then clone `foo` and `bar` with
+`mgit clone foo bar`, or simply `mgit clone-all`. This makes for
+a simple way to manage and share module collections that later can be
+cloned back wholesale with `mgit clone-all`.
+
+## But this will always clone master. How do I lock versions?
+
+	$ mgit release 1.0 update     # adds .mgit/1.0.release
+
+This creates (or updates) a list with currently checked out versions
+of all repos, effectively recording a snapshot of the entire project.
+This snapshot can later be restored with:
+
+	$ mgit release 1.0 checkout
+
+Needless to say, you can add the .release file to your meta repo too,
+just like with the .baseurl and .origin files before, so that other people
+will be able to clone the project at that specific release point.
+
+Another quick way to get a snapshot of the project without using .release
+files is with:
+
+	$ mgit --all ver
+
+And later clone/checkout the repos with:
+
+	$ mgit clone <the output of mgit --all ver>
+
+## How does this work anyway?
 
 Simply by telling git to clone all the repositories into a common
 work tree. The git trees are kept in `.mgit/<repo>/.git` and the
@@ -91,65 +164,10 @@ mgit foo ls-files:
 	export GIT_DIR=.mgit/foo/.git    # set git to work on foo
 	git ls-files                     # list files of foo
 
-## How do I clone repos overlaid?
-
-	$ mkdir project
-	$ cd project
-	$ mgit clone https://github.com/bob/foo
-	$ mgit clone https://github.com/bob/bar
-
-## But do I have to type the full URL every time?
-
-	$ mgit baseurl https://github.com/bob/  # adds .mgit/bob.baseurl
-	$ mgit clone bob/foo bob/bar            # adds .mgit/foo.origin and .mgit/bar.origin
-
-Now that bob is known as a remote, and both foo's and bar's origins are
-known too (they are set to `bob`), next time it will be enough to type
-`mgit clone foo bar`. Which brings us to the next question...
-
-## How do I create module collections?
-
-	$ mgit init meta
-	$ mgit meta add -f .mgit/bob.baseurl
-	$ mgit meta add -f .mgit/foo.origin
-	$ mgit meta add -f .mgit/bar.origin
-	$ mgit meta commit -m "bob's place; foo and bar modules"
-
-The meta repo like any other another repo (and it doesn't have to be
-called meta either). It contains the information necessary to clone
-foo and bar by name alone. So by cloning `meta` into your project
-(by it's full url), you can then clone `foo` and `bar` with
-`mgit clone foo bar`, or simply `mgit clone-all`. This makes for
-a simple way to share and manage module collections that people
-can clone wholesale with `mgit clone-all`.
-
-## This will always clone master. How do I lock versions?
-
-	$ mgit release 1.0 update     # adds .mgit/1.0.release
-
-This creates (or updates) a list with currently checked out versions
-of all repos, effectively recording a snapshot of the entire project.
-This snapshot can later be restored with:
-
-	$ mgit release 1.0 checkout
-
-Needless to say, you can add the .release file to your meta repo,
-just like with the .baseurl and .origin files before, so that other people
-will be able to clone the project at that release point.
-
-Another quick way to get a snapshot of the project without using .release
-files is with:
-
-	$ mgit --all ver
-
-And later clone/checkout the repos with:
-
-	$ mgit clone <the output of mgit --all ver>
-
-## How does it use the current directory?
+## What's its relation to the current directory?
 
 Just like git, mgit scans the current directory and its parents for
-a `.mgit` dir, and changes the current directory to that directory,
+a `.mgit` dir, and if found, it sets the current directory to that directory,
 and everything else happens from there.
 
 ## Where is multigit used?
