@@ -110,8 +110,9 @@ or simply `mgit clone-all`.
 
 	$ mgit release 1.0 update     # adds .mgit/1.0.release
 
-This creates a list with current versions of all repos.
-To clone and/or checkout those versions in the future, use:
+This creates (or updates) a list with currently checked out versions
+of all repos, effectively creating a snapshot of the entire project.
+This snapshot can be later restored with:
 
 	$ mgit release 1.0 checkout
 
