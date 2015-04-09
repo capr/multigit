@@ -146,14 +146,14 @@ that are exposed as multigit commands (like build scripts, etc.).
 Plugin scripts can be included say, in the meta package of your project.
 The way they work is very simple:
 
-`mgit <repo> <command> ...` will try to run
-`.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly
-and `$MULTIGIT_REPO` set to `<repo>`.
+  * `mgit <repo> <command> ...` will try to run
+    `.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly
+    and `$MULTIGIT_REPO` set to `<repo>`.
 
-`mgit <command> ...` will try to run `.mgit/<command>.sh`.
+  * `mgit <command> ...` will try to run `.mgit/<command>.sh`.
 
-`mgit help` will try to `cat .mgit/*.help`, which is where you should
-place the help section of the added commands.
+  * `mgit help` will try to `cat .mgit/*.help`, which is where you should
+    place the help section of the added commands.
 
 Look at [luapower-repos](https://github.com/luapower/luapower-repos)
 for a real-world example of this.
