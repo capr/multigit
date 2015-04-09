@@ -51,7 +51,7 @@ Let's see a bare bones example:
 	$ mgit bar ls-files
 	bar.txt                        # and project bar only tracks bar.txt
 
-Notice the `-f` (force) when adding files to git. When creating a repo with
+Note the `-f` (force) when adding files to git. When creating a repo with
 `mgit init foo`, the `.gitignore` file for foo is set to
 `.mgit/foo.exclude` which defaults to `*`, which means that
 all files are ignored by default, hence the need to add them with `-f`.
