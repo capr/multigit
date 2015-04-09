@@ -35,14 +35,7 @@ usage() {
 	echo "   REPO                         start a shell for using git on a repo"
 	echo "   REPO|--all command ...       execute any git command on a repo"
 	echo "   REPO|--all exec ...          execute a shell command in a repo context"
-	echo
-	echo "   REPO|--all up [MESSAGE]      add/commit/push combo"
-	echo "   REPO|--all bump              bump version and push tags"
-	echo "   REPO|--all uptag             update tag (!) and push tags"
-	echo "   REPO|--all ver[sion]         show repo version (enum or list)"
-	echo "   REPO|--all clear-history     clear the history of the current branch (!)"
-	echo "   REPO|--all update-perms      git-chmod +x all .sh files in repo"
-	echo
+   echo "   REPO|--all ver[sion]         show repo version (enum or list)"
 	echo "   REPO|--all make-symlinks     make symbolic links in .multigit/REPO"
 	echo "   REPO|--all make-hardlinks    make hard links in .multigit/REPO"
 	echo
@@ -52,10 +45,15 @@ usage() {
 	echo
 	echo "   [help|--help]                show this screen"
 	echo
+	# append any plugin help files
+	for f in .multigit/*.help; do
+		cat "$f"
+	done
+	echo
 	exit
 }
 
-check_root() { [ -d .multigit ] || usage "\".multigit\" dir not found."; }
+check_root() { [ -d .multigit ] || usage "'.multigit' dir not found."; }
 
 list_known() {
 	check_root
@@ -131,13 +129,14 @@ clone_all() {
 
 init() {
 	local name="$1"
-	name="${name//[[:blank:]]/}" # spaces not allowed
-	[ "$name" = "$1" ] || usage "Invalid name \"$1\"."
+	name="${name//[^-_0123456789abcdefghijklmnopqrstuvwxyz]/}"
+	[ "$name" = "$1" ] || \
+		usage "Invalid name: '$1'. Only letters, numbers, '-' and '_' allowed."
 	shift
 
 	# check that the repo is not already cloned
 	[ -d ".multigit/$name" ] && {
-		echo "SKIPPING: Already exists: \"$name\"."
+		echo "SKIPPING: Already exists: '$name'."
 		return 1
 	}
 
@@ -162,7 +161,7 @@ clone_one() {
 	local ver
 
 	arg="${arg//[[:blank:]]/}" # spaces not allowed
-	[ "$arg" = "$1" ] || usage "Invalid name \"$name\"."
+	[ "$arg" = "$1" ] || usage "Invalid name '$name'."
 
 	# extract `=version` if any
 	ver="${arg##*=}"
@@ -182,7 +181,7 @@ clone_one() {
 	fi
 
 	# check that arg is not `/` or `origin/`
-	[ "$name" ] || usage "Invalid repo name \"$1\"."
+	[ "$name" ] || usage "Invalid repo name '$1'."
 
 	# check for a registered origin
 	[ -f ".multigit/$name.origin" ] && \
@@ -191,11 +190,11 @@ clone_one() {
 	# decide the origin
 	if [ "$origin" ]; then
 		[ "$rorigin" -a "$origin" != "$rorigin" ] && \
-			echo "NOTE:  Using different origin for \"$name\": \"$origin\" (was \"$rorigin\")."
+			echo "NOTE:  Using different origin for '$name': '$origin' (was '$rorigin')."
 	else
 		origin="$rorigin"
 		[ "$origin" ] || {
-			echo "SKIPPING: Unknown repo \"$name\"."
+			echo "SKIPPING: Unknown repo '$name'."
 			return
 		}
 	fi
@@ -210,8 +209,8 @@ clone_one() {
 			if [ "${origin#*:}" != "$origin" ]; then
 				url="$origin"
 			else
-				echo "ERROR: Unknown origin: \"$origin\" for \"$name\"."
-				echo "HINT:  To register \"$origin\" to be used as an origin, type, eg.:"
+				echo "ERROR: Unknown origin: '$origin' for '$name'."
+				echo "HINT:  To register '$origin' to be used as an origin, type, eg.:"
 				echo "HINT:    "$(basename "$0")" baseurl $origin https://github.com/$origin/"
 				return
 			fi
@@ -234,9 +233,9 @@ clone_one() {
 	# if fetch was successful, (re)register the repo's origin
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
-			echo "NOTE:  Updating origin for \"$name\": \"$origin\" (was \"$rorigin\")"
+			echo "NOTE:  Updating origin for '$name': '$origin' (was '$rorigin')"
 		else
-			echo "NOTE:  Adding origin for \"$name\": \"$origin\" (url: \"$url\")"
+			echo "NOTE:  Adding origin for '$name': '$origin' (url: '$url')"
 		fi
 		mkdir -p .multigit
 		echo "$origin" > ".multigit/$name.origin"
@@ -258,20 +257,20 @@ clone() {
 run() { if [ "$DRY_RUN" ]; then echo "$@"; else "$@"; fi; }
 
 remove_one() {
-	[ "$1" ] || usage "Invalid name \"$1\"."
+	[ "$1" ] || usage "Invalid name '$1'."
 
 	[ -d ".multigit/$1/" ] || {
-		echo "ERROR: Repo not found \"$1\"."
+		echo "ERROR: Repo not found '$1'."
 		return
 	}
 
 	# don't remove from a subshell
 	[ "$MULTIGIT_REPO" == "$1" ] && \
-		usage "Refusing to remove \"$1\" from a subshell."
+		usage "Refusing to remove '$1' from a subshell."
 
 	# get tracked files for this repo
 	files="$(GIT_DIR=".multigit/$1/.git" git ls-files)" || {
-		echo "ERROR: Could not get the list of files for \"$1\"."
+		echo "ERROR: Could not get the list of files for '$1'."
 		echo "HINT:  If you know that there are no checked out files,"
 		echo "HINT:  feel free to \`rm -rf .multigit/$1/ .multigit/$1.exclude\`."
 		return
@@ -291,9 +290,9 @@ remove_one() {
 
 	# remove the git dir
 	run rm -rf ".multigit/$1/"
-	run rm -f "$1.exclude"
+	run rm  -f ".multigit/$1.exclude"
 
-	echo "Removed: \"$1\"."
+	echo "Removed: '$1'."
 }
 
 remove() {
@@ -323,8 +322,8 @@ baseurl() {
 	# spaces not allowed
 	origin="${origin//[[:blank:]]/}"
 	url="${url//[[:blank:]]/}"
-	[ -z "$1" -o "$1" != "$origin" ] && usage "Invalid origin name \"$1\"."
-	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl \"$2\"."
+	[ -z "$1" -o "$1" != "$origin" ] && usage "Invalid origin name '$1'."
+	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl '$2'."
 
 	if [ "X$url" = "X-" ]; then
 		rm ".multigit/$origin.baseurl"
@@ -352,8 +351,8 @@ origin() {
 	# spaces not allowed
 	repo="${repo//[[:blank:]]/}"
 	origin="${origin//[[:blank:]]/}"
-	[ -z "$1" -o "$1" != "$repo" ] && usage "Invalid repo name \"$1\"."
-	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin \"$2\"."
+	[ -z "$1" -o "$1" != "$repo" ] && usage "Invalid repo name '$1'."
+	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin '$2'."
 
 	if [ "X$origin" = "X-" ]; then
 		rm ".multigit/$repo.origin"
@@ -374,7 +373,7 @@ list_releases() {
 }
 
 show_release() {
-	[ -f ".multigit/$1.release" ] || usage "Unknown release \"$1\"."
+	[ -f ".multigit/$1.release" ] || usage "Unknown release '$1'."
 	cat ".multigit/$1.release"
 }
 
@@ -384,7 +383,7 @@ update_release() {
 
 checkout_release() {
 	local repo="$1"
-	[ -f ".multigit/$repo.release" ] || usage "Unknown release \"$repo\"."
+	[ -f ".multigit/$repo.release" ] || usage "Unknown release '$repo'."
 	cat ".multigit/$repo.release" | (IFS=" "; while read repo ver; do
 		[ -d ".multigit/$repo/.git" ] || "$0" clone "$repo"
 		local branch="$ver"; [ "$branch" ] || branch=master
@@ -395,18 +394,18 @@ checkout_release() {
 release() {
 	local rel="$1"
 	rel="${rel//[[:blank:]]/}" # spaces not allowed
-	[ "$rel" -a "$1" != "$rel" ] && usage "Invalid release name \"$1\"."
+	[ "$rel" -a "$1" != "$rel" ] && usage "Invalid release name '$1'."
 	[ "$rel" ] || { list_releases; return; }
 	case "$2" in
 		"")       show_release "$rel" ;;
 		update)   update_release "$rel" ;;
 		checkout) checkout_release "$rel" ;;
-		*)        usage "Invalid release commnad \"$2\"."
+		*)        usage "Invalid release commnad '$2'."
 	esac
 }
 
 git_shell() {
-	echo "Entering subshell: git commands will affect the repo \"$MULTIGIT_REPO\"."
+	echo "Entering subshell: git commands will affect the repo '$MULTIGIT_REPO'."
 	echo "Type \`exit' to exit subshell."
 	git status -s
 	echo
@@ -419,31 +418,6 @@ git_shell() {
 	fi
 }
 
-git_up() {
-	msg="$1"
-	[ "$msg" ] || msg="unimportant"
-	git add -A
-	git commit -m "$msg"
-	git push
-}
-
-git_bump() {
-	local tag="$(git describe --tags --abbrev=0 2>/dev/null)"
-	[ "$tag" ] || tag="0"
-	local n=$((tag+0))
-	[ "$n" == "$tag" ] || usage "Tag \"$tag\" is not a number."
-	tag=$((tag+1))
-	git tag -f "$tag"
-	git push -f --tags
-}
-
-git_uptag() {
-	local tag="$(git describe --tags --abbrev=0 2>/dev/null)"
-	[ "$tag" ] || usage "No current tag to update. Make a tag first."
-	git tag -f "$tag"
-	git push -f --tags
-}
-
 git_ver() {
 	printf "$MULTIGIT_REPO=$(git describe --tags --long --always) "
 	[ "$ALL" ] || echo
@@ -452,23 +426,6 @@ git_ver() {
 git_version() {
 	printf "%-20s" "$MULTIGIT_REPO"
 	git describe --tags --long --always
-}
-
-git_clear_history() {
-	local branch="$(git rev-parse --abbrev-ref HEAD)"
-	git checkout --orphan delete_me
-	git add -A
-	git commit -m "init (history cleared)"
-	git branch -D "$branch"
-	git branch -m "$branch"
-}
-
-git_update_perms() {
-	git ls-files | \
-		while read f; do
-			[ "${f##*.}" = "sh" ] && \
-				git update-index --chmod=+x "$f"
-		done
 }
 
 git_remove_links() {
@@ -492,23 +449,27 @@ git_make_symlinks() {
 }
 
 git_cmd() {
-	repo="$1"; shift
+	local repo="$1"
+	local cmd="$2"
+	shift 2
 	export GIT_DIR=".multigit/$repo/.git"
 	export MULTIGIT_REPO="$repo"
-	[ -d "$GIT_DIR" ] || usage "Unknown repo: \"$repo\"."
-	case "$1" in
-		exec)           shift; "$@" ;;
-		up)             git_up "$2" ;;
-		uptag)          git_uptag ;;
-		bump)           git_bump ;;
+	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
+	case "$cmd" in
+		exec)           "$@" ;;
 		ver)            git_ver ;;
 		version)        git_version ;;
-		clear-history)  git_clear_history ;;
-		update-perms)   git_update_perms ;;
 		make-symlinks)  git_make_symlinks ;;
 		make-hardlinks) git_make_hardlinks ;;
 		"")             git_shell ;;
-		*)              git "$@" ;;
+		*)
+			# look for and execute a git plugin command
+			if [ -f ".multigit/git-$cmd.sh" ]; then
+				".multigit/git-$cmd.sh" "$@"
+			else
+				git "$cmd" "$@"
+			fi
+		;;
 	esac
 	export GIT_DIR=
 	export MULTIGIT_REPO=
@@ -526,7 +487,7 @@ cd_root() {
 	while [ "$PWD" != "$pwd1" ]; do
 		[ -d .multigit ] && return
 		pwd1="$PWD"
-		cd .. || usage "Could not cd to \"$PWD/..\"."
+		cd .. || usage "Could not cd to '$PWD/..'."
 	done
 	cd "$PWD0" # root dir not found, go back to initial dir
 }
@@ -534,7 +495,8 @@ cd_root() {
 PWD0="$PWD"
 cd_root
 
-case "$1" in
+cmd="$1"; shift
+case "$cmd" in
 	"")           usage ;;
 	help)         usage ;;
 	--help)       usage ;;
@@ -545,16 +507,22 @@ case "$1" in
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
-	init)    shift; init "$@" ;;
-	clone)   shift; clone "$@" ;;
-	remove)  shift; remove "$@" ;;
-	baseurl) shift; baseurl "$@" ;;
-	origin)  shift; origin "$@" ;;
-	release) shift; release "$@" ;;
+	init)         init "$@" ;;
+	clone)        clone "$@" ;;
+	remove)       remove "$@" ;;
+	baseurl)      baseurl "$@" ;;
+	origin)       origin "$@" ;;
+	release)      release "$@" ;;
 	--all)
-		shift
 		[ "$1" ] || usage "Refusing to start a subshell for each repo."
 		git_cmd_all "$@"
 		;;
-	*) git_cmd "$@" ;;
+	*)
+		# look for and execute a plugin command
+		if [ -f ".multigit/$cmd.sh" ]; then
+			".multigit/$cmd.sh" "$@"
+		else
+			git_cmd "$cmd" "$@"
+		fi
+		;;
 esac
