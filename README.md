@@ -30,11 +30,10 @@ Let's see a bare bones example:
 
 	$ mkdir project
 	$ cd project
-	$
+
 	$ mgit init foo                # create layered repo foo
 	$ mgit init bar                # create layered repo bar
-
-	$ mgit ls                      # list our repos
+	$ mgit ls                      # list repos
 	foo
 	bar
 
