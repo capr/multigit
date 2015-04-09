@@ -26,9 +26,6 @@ you want to create a multigit project in, and call it as `./mgit`
 
 ## How do I use it?
 
-> Although not required, the examples below assume mgit is
-somewhere in your PATH.
-
 Let's see a bare bones example:
 
 	$ mkdir project
