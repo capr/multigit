@@ -71,7 +71,7 @@ as multigit is, it's still yet another script that you have to deploy.
 
 Don't worry about it, it's mostly fluff. The gist of it is only 6 lines:
 
-mgit init foo:
+`$ mgit init foo`
 
 	mkdir -p .mgit/foo
 	export GIT_DIR=.mgit/foo/.git
@@ -80,7 +80,7 @@ mgit init foo:
 	git config --local core.excludesfile .mgit/foo.exclude    # instead of .gitignore
 	[ -f .mgit/foo.exclude ] || echo '*' > .mgit/foo.exclude  # "ignore all"
 
-mgit foo ls-files:
+`$ mgit foo ls-files`
 
 	export GIT_DIR=.mgit/foo/.git    # set git to work on foo
 	git ls-files                     # list files of foo
