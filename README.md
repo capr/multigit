@@ -139,7 +139,7 @@ Just like git, mgit scans for a `.mgit` dir to find the root of your project,
 and changes the current directory to that directory, and everything else
 happens from there.
 
-## Who uses it?
+## Where is multigit used?
 
 Multigit is the package manager for [luapower](https://luapower.com).
 The [meta-package](https://github.com/luapower/luapower-repos) is just
