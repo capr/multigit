@@ -2,7 +2,7 @@
 
 #### layered git repositories
 <sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub><br>
-<sub>Tested on Windows, Linux and OSX</sub>
+<sub>Tested on **Linux**, **Windows** and **OSX**</sub>
 
 Multigit allows you to check out multiple git repositories over a
 common directory and provides simple tools that let you continue
