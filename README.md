@@ -27,6 +27,8 @@ as multigit is, it's still yet another script that you have to deploy.
 
 ## How do I use it?
 
+Let's see a bare bones example:
+
 	$ mkdir project
 	$ cd project
 	$ mgit init foo                # create layered subproject foo
@@ -56,3 +58,27 @@ appropriate to each repo. Given that all repos now share the same
 namespace, you need to be explicit about which parts of that namespace
 are "reserved" for which repo.
 
+## Who uses it?
+
+Multigit is the package manager for [luapower](https://luapower.com).
+The [meta-package](https://github.com/luapower/luapower-repos) contains
+the list of packages to clone by name and some multigit plugins specific
+to luapower.
+
+## What multigit plugins?
+
+Plugins allows extending multigit with project-specific scripts
+that are exposed as multigit commands (like build scripts, etc.).
+Plugin scripts can be included in any of the repo(s) of your project.
+
+`mgit <repo> <command> ...` will try to run
+`.multigit/git-<command>.sh ...` with `$GIT_DIR` set properly
+and `$MULTIGIT_REPO` set to `<repo>`.
+
+`mgit <command> ...` will try to run `.multigit/<command>.sh`.
+
+`mgit help` will try to `cat .multigit/*.help`, which is where you should
+place the help section of the added commands.
+
+Look at [meta-package](https://github.com/luapower/luapower-repos)
+for a real-world example of this.

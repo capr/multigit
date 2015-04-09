@@ -46,9 +46,7 @@ usage() {
 	echo "   [help|--help]                show this screen"
 	echo
 	# append any plugin help files
-	for f in .multigit/*.help; do
-		cat "$f"
-	done
+	cat .multigit/*.help
 	echo
 	exit
 }
