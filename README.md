@@ -43,7 +43,7 @@ Let's see a bare bones example:
 	$ mgit bar add -f bar.txt      # add bar.txt to project bar
 	$ mgit foo commit -m "init"    # commit on foo
 	$ mgit bar commit -m "init"    # commit on bar
-	$
+
 	$ ls
 	foo.txt bar.txt                # foo.txt and bar.txt are in the same dir
 	$ mgit foo ls-files
