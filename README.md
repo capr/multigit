@@ -32,7 +32,7 @@ Let's see a bare bones example:
 	$ mgit foo commit -m "init"    # commit on foo
 	$ mgit bar commit -m "init"    # commit on bar
 	$ ls
-	foo.txt bar.txt                # both foo.txt and bar.txt share the same dir
+	foo.txt bar.txt                # foo.txt and bar.txt are in the same dir
 	$ mgit foo ls-files
 	foo.txt                        # but project foo only tracks foo.txt
 	$ mgit bar ls-files
