@@ -125,7 +125,7 @@ This snapshot can later be restored with:
 
 	$ mgit release 1.0 checkout
 
-Needless to say, you can add these release files to your meta package,
+Needless to say, you can add the .release files to your meta package,
 just like with the .baseurl and .origin files before, so that other people
 will be able to clone the project at that release point.
 
