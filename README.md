@@ -74,9 +74,9 @@ To recover the convenience of `git -A` and the correct reporting of
 untracked files, change the exclude files and add patterns that are
 appropriate to each repo. Given that all repos now share the same
 namespace, you need to be explicit about which parts of that namespace
-are "reserved" for which repo.
+are "reserved" for which repos.
 
-## How do I clone repos?
+## How do I clone repos overlaid?
 
 	$ mkdir project
 	$ cd project
