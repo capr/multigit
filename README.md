@@ -22,11 +22,11 @@ Simply by telling git to clone all the repositories into a common
 work tree. The git trees are kept in `.multigit/<repo>/.git` and the
 work tree is always '.'.
 
-This is such basic and such useful functionality that it should
+> This is such basic and such useful functionality that it should
 be built into `git clone` and `git init` really. As dead simple
 as multigit is, it's still yet another script that you have to deploy.
 
-## Simple? But it's a 500 lines script!
+## But it's a 500 lines script!
 
 Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
 
