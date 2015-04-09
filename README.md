@@ -106,6 +106,19 @@ foo and bar by name alone. So by cloning meta into your project
 (by it's full url), you can then clone foo and bar with `mgit clone foo bar`,
 or simply `mgit clone-all`.
 
+## This will always clone master. How do I lock versions?
+
+	$ mgit release 1.0 update     # adds .mgit/1.0.release
+
+This creates a list with current versions of all repos.
+To clone and/or checkout those versions in the future, use:
+
+	$ mgit release 1.0 checkout
+
+Needless to say, you can add these release files to your meta package,
+just like with the .baseurl and .origin files before.
+
+
 ## Who uses it?
 
 Multigit is the package manager for [luapower](https://luapower.com).
