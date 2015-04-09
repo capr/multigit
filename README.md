@@ -115,8 +115,8 @@ foo and bar by name alone. So by cloning `meta` into your project
 	$ mgit release 1.0 update     # adds .mgit/1.0.release
 
 This creates (or updates) a list with currently checked out versions
-of all repos, effectively creating a snapshot of the entire project.
-This snapshot can be later restored with:
+of all repos, effectively recording a snapshot of the entire project.
+This snapshot can later be restored with:
 
 	$ mgit release 1.0 checkout
 
