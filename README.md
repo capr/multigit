@@ -104,9 +104,9 @@ known too (they are set to `bob`), next time it will be enough to type
 
 The meta repo like any other another repo (and it doesn't have to be
 called meta either). It contains the information necessary to clone
-foo and bar by name alone. So by cloning meta into your project
-(by it's full url), you can then clone foo and bar with `mgit clone foo bar`,
-or simply `mgit clone-all`.
+foo and bar by name alone. So by cloning `meta` into your project
+(by it's full url), you can then clone `foo` and `bar` with
+`mgit clone foo bar`, or simply `mgit clone-all`.
 
 ## This will always clone master. How do I lock versions?
 
