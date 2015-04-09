@@ -49,8 +49,8 @@ Let's see a bare bones example:
 
 	$ mkdir project
 	$ cd project
-	$ mgit init foo                # create layered subproject foo
-	$ mgit init bar                # create layered subproject bar
+	$ mgit init foo                # create layered repo foo
+	$ mgit init bar                # create layered repo bar
 	$ touch foo.txt                # create empty file foo.txt
 	$ touch bar.txt                # create empty file bar.txt
 	$ mgit foo add -f foo.txt      # add foo.txt to project foo
