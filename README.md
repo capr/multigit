@@ -201,5 +201,6 @@ for a real-world example of this.
 
 ## Related efforts
 
-The most similar project that I was able to find is [vcsh](https://github.com/RichiH/vcsh).
-It even has a [video presentation](http://mirror.as35701.net/video.fosdem.org//2012/lightningtalks/vcsh.webm).
+There is a very similar project called [vcsh](https://github.com/RichiH/vcsh).
+It even has a [video presentation](http://mirror.as35701.net/video.fosdem.org//2012/lightningtalks/vcsh.webm),
+check it out.
