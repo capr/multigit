@@ -133,6 +133,11 @@ And later clone/checkout the repos with:
 
 	$ mgit clone <the output of mgit --all ver>
 
+## How does it use the current directory?
+
+Just like git, mgit scans for a `.mgit` dir to find the root of your project,
+and changes the current directory to that directory, and everything else
+happens from there.
 
 ## Who uses it?
 
