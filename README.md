@@ -1,6 +1,6 @@
 # multigit
 
-### layered git repositories
+#### layered git repositories
 <sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub>
 
 Multigit allows you to check out multiple git repositories over a
