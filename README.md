@@ -17,34 +17,6 @@ only allow subprojects to deploy files in their own subdirectory.
 Multigit allows subprojects to deploy files in any directory of the
 project, similar to a union filesystem, where each repository is a layer.
 
-## How does it work?
-
-Simply by telling git to clone all the repositories into a common
-work tree. The git trees are kept in `.mgit/<repo>/.git` and the
-work tree is always '.'.
-
-> This is such basic and useful functionality that it should
-be built into `git clone` and `git init` really. As dead simple
-as multigit is, it's still yet another script that you have to deploy.
-
-## But it's a 500 lines script!
-
-Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
-
-mgit init foo:
-
-	mkdir -p .mgit/foo
-	export GIT_DIR=.mgit/foo/.git
-	git init                                                  # create .mgit/foo/.git
-	git config --local core.worktree ../../..                 # relative to GIT_DIR
-	git config --local core.excludesfile .mgit/foo.exclude    # instead of .gitignore
-	[ -f .mgit/foo.exclude ] || echo '*' > .mgit/foo.exclude  # "ignore all"
-
-mgit foo ls-files:
-
-	export GIT_DIR=.mgit/foo/.git    # set git to work on foo
-	git ls-files                     # list files of foo
-
 ## How do I use it?
 
 Let's see a bare bones example:
@@ -77,6 +49,34 @@ untracked files, change the exclude files and add patterns that are
 appropriate to each repo. Given that all repos now share the same
 namespace, you need to be explicit about which parts of that namespace
 are "reserved" for which repos.
+
+## How does it work?
+
+Simply by telling git to clone all the repositories into a common
+work tree. The git trees are kept in `.mgit/<repo>/.git` and the
+work tree is always '.'.
+
+> This is such basic and useful functionality that it should
+be built into `git clone` and `git init` really. As dead simple
+as multigit is, it's still yet another script that you have to deploy.
+
+## But it's a 500 lines script!
+
+Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
+
+mgit init foo:
+
+	mkdir -p .mgit/foo
+	export GIT_DIR=.mgit/foo/.git
+	git init                                                  # create .mgit/foo/.git
+	git config --local core.worktree ../../..                 # relative to GIT_DIR
+	git config --local core.excludesfile .mgit/foo.exclude    # instead of .gitignore
+	[ -f .mgit/foo.exclude ] || echo '*' > .mgit/foo.exclude  # "ignore all"
+
+mgit foo ls-files:
+
+	export GIT_DIR=.mgit/foo/.git    # set git to work on foo
+	git ls-files                     # list files of foo
 
 ## How do I clone repos overlaid?
 
