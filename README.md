@@ -80,5 +80,5 @@ and `$MULTIGIT_REPO` set to `<repo>`.
 `mgit help` will try to `cat .multigit/*.help`, which is where you should
 place the help section of the added commands.
 
-Look at [meta-package](https://github.com/luapower/luapower-repos)
+Look at [luapower-repos](https://github.com/luapower/luapower-repos)
 for a real-world example of this.
