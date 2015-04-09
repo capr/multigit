@@ -69,7 +69,7 @@ as multigit is, it's still yet another script that you have to deploy.
 
 ## Simple? But it's a 500 lines script!
 
-Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
+Don't worry about it, it's mostly fluff. The gist of it is only 6 lines:
 
 mgit init foo:
 
