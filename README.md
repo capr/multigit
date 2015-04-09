@@ -27,22 +27,22 @@ as multigit is, it's still yet another script that you have to deploy.
 
 ## How do I use it?
 
-$ mkdir project
-$ cd project
-$ mgit init foo                # create layered subproject foo
-$ mgit init bar                # create layered subproject bar
-$ touch foo.txt                # create empty file foo.txt
-$ touch bar.txt                # create empty file bar.txt
-$ mgit foo add -f foo.txt      # add foo.txt to project foo
-$ mgit bar add -f bar.txt      # add bar.txt to project bar
-$ mgit foo commit -m "init"    # commit on foo
-$ mgit bar commit -m "init"    # commit on bar
-$ ls
-foo.txt bar.txt                # both foo.txt and bar.txt share the same dir
-$ mgit foo ls-files
-foo.txt                        # but project foo only tracks foo.txt
-$ mgit bar ls-files
-bar.txt                        # while project bar only tracks bar.txt
+	$ mkdir project
+	$ cd project
+	$ mgit init foo                # create layered subproject foo
+	$ mgit init bar                # create layered subproject bar
+	$ touch foo.txt                # create empty file foo.txt
+	$ touch bar.txt                # create empty file bar.txt
+	$ mgit foo add -f foo.txt      # add foo.txt to project foo
+	$ mgit bar add -f bar.txt      # add bar.txt to project bar
+	$ mgit foo commit -m "init"    # commit on foo
+	$ mgit bar commit -m "init"    # commit on bar
+	$ ls
+	foo.txt bar.txt                # both foo.txt and bar.txt share the same dir
+	$ mgit foo ls-files
+	foo.txt                        # but project foo only tracks foo.txt
+	$ mgit bar ls-files
+	bar.txt                        # while project bar only tracks bar.txt
 
 Notice the `-f` (force) when adding files to git. When creating a repo with
 `mgit init foo`, the `.gitignore` file for foo is set to
