@@ -19,7 +19,7 @@ project, similar to a union filesystem, where each repository is a layer.
 ## How does it work?
 
 Simply by telling git to clone all the repositories into a common
-work tree. The git trees are kept in `.multigit/<repo>/.git` and the
+work tree. The git trees are kept in `.mgit/<repo>/.git` and the
 work tree is always '.'.
 
 > This is such basic and useful functionality that it should
@@ -32,16 +32,16 @@ Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
 
 mgit init foo:
 
-	mkdir -p .multigit/foo
-	export GIT_DIR=.multigit/foo/.git
-	git init                  # this will create .multigit/foo/.git as opposed to .git
+	mkdir -p .mgit/foo
+	export GIT_DIR=.mgit/foo/.git
+	git init                  # this will create .mgit/foo/.git as opposed to .git
 	git config --local core.worktree ../../..                   # relative to GIT_DIR
-	git config --local core.excludesfile .multigit/foo.exclude  # instead of .gitignore
-	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude  # "ignore all"
+	git config --local core.excludesfile .mgit/foo.exclude  # instead of .gitignore
+	[ -f .mgit/foo.exclude ] || echo '*' > .mgit/foo.exclude  # "ignore all"
 
 mgit foo ls-files:
 
-	GIT_DIR=.multigit/foo/.git git ls-files  # list files of foo
+	GIT_DIR=.mgit/foo/.git git ls-files  # list files of foo
 
 ## How do I use it?
 
@@ -66,7 +66,7 @@ Let's see a bare bones example:
 
 Notice the `-f` (force) when adding files to git. When creating a repo with
 `mgit init foo`, the `.gitignore` file for foo is set to
-`.multigit/foo.exclude` which defaults to `*`, which means that
+`.mgit/foo.exclude` which defaults to `*`, which means that
 all files are ignored by default, hence the need to add them with `-f`.
 This is to prevent accidentally adding files of other projects with
 `git add -A` and ending up with multiple projects tracking the same file.
@@ -85,8 +85,8 @@ are "reserved" for which repo.
 
 ## But do I have to type the full URL every time?
 
-	$ mgit baseurl https://github.com/bob/    # adds .multigit/bob.baseurl
-	$ mgit clone bob/foo bob/bar              # adds .multigit/foo.origin and .multigit/bar.origin
+	$ mgit baseurl https://github.com/bob/    # adds .mgit/bob.baseurl
+	$ mgit clone bob/foo bob/bar              # adds .mgit/foo.origin and .mgit/bar.origin
 
 Now that bob is known as a remote, and both foo's and bar's origins are
 known too (they are set to `bob`), next time it will be enough to type
@@ -95,9 +95,9 @@ known too (they are set to `bob`), next time it will be enough to type
 ## How do I create package collections?
 
 	$ mgit init meta
-	$ mgit meta add -f .multigit/bob.baseurl
-	$ mgit meta add -f .multigit/foo.origin
-	$ mgit meta add -f .multigit/bar.origin
+	$ mgit meta add -f .mgit/bob.baseurl
+	$ mgit meta add -f .mgit/foo.origin
+	$ mgit meta add -f .mgit/bar.origin
 	$ mgit meta commit -m "bob's place; foo and bar packages"
 
 The meta repo like any other another repo (and it doesn't have to be
@@ -120,12 +120,12 @@ that are exposed as multigit commands (like build scripts, etc.).
 Plugin scripts can be included in any of the repo(s) of your project.
 
 `mgit <repo> <command> ...` will try to run
-`.multigit/git-<command>.sh ...` with `$GIT_DIR` set properly
+`.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly
 and `$MULTIGIT_REPO` set to `<repo>`.
 
-`mgit <command> ...` will try to run `.multigit/<command>.sh`.
+`mgit <command> ...` will try to run `.mgit/<command>.sh`.
 
-`mgit help` will try to `cat .multigit/*.help`, which is where you should
+`mgit help` will try to `cat .mgit/*.help`, which is where you should
 place the help section of the added commands.
 
 Look at [luapower-repos](https://github.com/luapower/luapower-repos)

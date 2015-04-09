@@ -36,8 +36,8 @@ usage() {
 	echo "   REPO|--all command ...       execute any git command on a repo"
 	echo "   REPO|--all exec ...          execute a shell command in a repo context"
    echo "   REPO|--all ver[sion]         show repo version (enum or list)"
-	echo "   REPO|--all make-symlinks     make symbolic links in .multigit/REPO"
-	echo "   REPO|--all make-hardlinks    make hard links in .multigit/REPO"
+	echo "   REPO|--all make-symlinks     make symbolic links in .mgit/REPO"
+	echo "   REPO|--all make-hardlinks    make hard links in .mgit/REPO"
 	echo
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update           create/update a release based on HEADs"
@@ -46,16 +46,16 @@ usage() {
 	echo "   [help|--help]                show this screen"
 	echo
 	# append any plugin help files
-	cat .multigit/*.help
+	cat .mgit/*.help
 	echo
 	exit
 }
 
-check_root() { [ -d .multigit ] || usage "'.multigit' dir not found."; }
+check_root() { [ -d .mgit ] || usage "'.mgit' dir not found."; }
 
 list_known() {
 	check_root
-	(cd .multigit && \
+	(cd .mgit && \
 	for f in *.origin; do
 		echo "${f%.origin}"
 	done)
@@ -63,7 +63,7 @@ list_known() {
 
 list_cloned() {
 	check_root
-   (cd .multigit && \
+   (cd .mgit && \
 	for f in *; do
 		[ -d "$f/.git" ] && echo "$f"
 	done)
@@ -71,7 +71,7 @@ list_cloned() {
 
 list_uncloned() {
 	check_root
-	(cd .multigit && \
+	(cd .mgit && \
 	for f in *.origin; do
 		f="${f%.origin}"
 		[ ! -d "$f/.git" ] && echo $f
@@ -86,7 +86,7 @@ list_modified() {
 list_unpushed() {
 	check_root
 	for repo in `list_cloned`; do
-		[ "$(GIT_DIR=".multigit/$repo/.git" \
+		[ "$(GIT_DIR=".mgit/$repo/.git" \
 				git rev-list HEAD...origin/master --count 2>/dev/null)" \
 			!= "0" ] && echo "$repo"
 	done
@@ -96,7 +96,7 @@ tracked_files() {
 	check_root
 	([ -d .git ] && git ls-files
 	for repo in `list_cloned`; do
-		GIT_DIR=".multigit/$repo/.git" git ls-files
+		GIT_DIR=".mgit/$repo/.git" git ls-files
 	done) | sort | uniq $1
 }
 
@@ -112,7 +112,7 @@ list_untracked() {
 list_double_tracked() {
 	check_root
 	for repo in `list_cloned`; do
-		GIT_DIR=".multigit/$repo/.git" git ls-files | while read f; do
+		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
 			printf "%-16s %s\n" "$repo" "$f"
 		done
 	done | grep -F -w -f <(tracked_files -d)
@@ -133,19 +133,19 @@ init() {
 	shift
 
 	# check that the repo is not already cloned
-	[ -d ".multigit/$name" ] && {
+	[ -d ".mgit/$name" ] && {
 		echo "SKIPPING: Already exists: '$name'."
 		return 1
 	}
 
-	mkdir -p ".multigit/$name"
-	export GIT_DIR=".multigit/$name/.git"
+	mkdir -p ".mgit/$name"
+	export GIT_DIR=".mgit/$name/.git"
 	git init "$@"
 	git config --local core.worktree ../../..
 
 	# make a default "exclude-all" exclude file
-	git config --local core.excludesfile ".multigit/$name.exclude"
-	[ -f ".multigit/$name.exclude" ] || echo '*' > ".multigit/$name.exclude"
+	git config --local core.excludesfile ".mgit/$name.exclude"
+	[ -f ".mgit/$name.exclude" ] || echo '*' > ".mgit/$name.exclude"
 
 	return 0
 }
@@ -182,8 +182,8 @@ clone_one() {
 	[ "$name" ] || usage "Invalid repo name '$1'."
 
 	# check for a registered origin
-	[ -f ".multigit/$name.origin" ] && \
-		rorigin=$(cat .multigit/$name.origin)
+	[ -f ".mgit/$name.origin" ] && \
+		rorigin=$(cat .mgit/$name.origin)
 
 	# decide the origin
 	if [ "$origin" ]; then
@@ -199,8 +199,8 @@ clone_one() {
 
 	# find the origin url
 	if [ ! "$url" ]; then
-		if [ -f ".multigit/$origin.baseurl" ]; then
-			local baseurl=$(cat .multigit/$origin.baseurl)
+		if [ -f ".mgit/$origin.baseurl" ]; then
+			local baseurl=$(cat .mgit/$origin.baseurl)
 			url="$baseurl$name"
 		else
 			# assume the origin on file is a full url: check if it is
@@ -219,8 +219,8 @@ clone_one() {
 	init "$name" || return
 	git remote add origin "$url"
 	git fetch $MULTIGIT_FETCH_OPTS || {
-		rm -rf ".multigit/$name/"
-		rm ".multigit/$name.exclude"
+		rm -rf ".mgit/$name/"
+		rm ".mgit/$name.exclude"
 		echo "ERROR: Fetch failed. Repo removed."
 		return
 	}
@@ -235,8 +235,8 @@ clone_one() {
 		else
 			echo "NOTE:  Adding origin for '$name': '$origin' (url: '$url')"
 		fi
-		mkdir -p .multigit
-		echo "$origin" > ".multigit/$name.origin"
+		mkdir -p .mgit
+		echo "$origin" > ".mgit/$name.origin"
 	fi
 }
 
@@ -257,7 +257,7 @@ run() { if [ "$DRY_RUN" ]; then echo "$@"; else "$@"; fi; }
 remove_one() {
 	[ "$1" ] || usage "Invalid name '$1'."
 
-	[ -d ".multigit/$1/" ] || {
+	[ -d ".mgit/$1/" ] || {
 		echo "ERROR: Repo not found '$1'."
 		return
 	}
@@ -267,10 +267,10 @@ remove_one() {
 		usage "Refusing to remove '$1' from a subshell."
 
 	# get tracked files for this repo
-	files="$(GIT_DIR=".multigit/$1/.git" git ls-files)" || {
+	files="$(GIT_DIR=".mgit/$1/.git" git ls-files)" || {
 		echo "ERROR: Could not get the list of files for '$1'."
 		echo "HINT:  If you know that there are no checked out files,"
-		echo "HINT:  feel free to \`rm -rf .multigit/$1/ .multigit/$1.exclude\`."
+		echo "HINT:  feel free to \`rm -rf .mgit/$1/ .mgit/$1.exclude\`."
 		return
 	}
 
@@ -287,8 +287,8 @@ remove_one() {
 	done
 
 	# remove the git dir
-	run rm -rf ".multigit/$1/"
-	run rm  -f ".multigit/$1.exclude"
+	run rm -rf ".mgit/$1/"
+	run rm  -f ".mgit/$1.exclude"
 
 	echo "Removed: '$1'."
 }
@@ -308,8 +308,8 @@ remove() {
 
 baseurl() {
 	[ "$1" ] || {
-		for f in .multigit/*.baseurl; do
-			f="${f#.multigit/}"
+		for f in .mgit/*.baseurl; do
+			f="${f#.mgit/}"
 			f="${f%.baseurl}"
 			printf "%-20s %s\n" "$f" "$(baseurl "$f")"
 		done
@@ -324,20 +324,20 @@ baseurl() {
 	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl '$2'."
 
 	if [ "X$url" = "X-" ]; then
-		rm ".multigit/$origin.baseurl"
+		rm ".mgit/$origin.baseurl"
 	elif [ "$url" ]; then
 		[ "${url##*/}" != "" ] && usage "A base URL must end with a '/'."
-		mkdir -p .multigit
-		echo "$url" > ".multigit/$origin.baseurl"
+		mkdir -p .mgit
+		echo "$url" > ".mgit/$origin.baseurl"
 	else
-		cat ".multigit/$origin.baseurl"
+		cat ".mgit/$origin.baseurl"
 	fi
 }
 
 origin() {
 	[ "$1" ] || {
-		for f in .multigit/*.origin; do
-			f="${f#.multigit/}"
+		for f in .mgit/*.origin; do
+			f="${f#.mgit/}"
 			f="${f%.origin}"
 			printf "%-20s %s\n" "$f" "$(origin "$f")"
 		done
@@ -353,37 +353,37 @@ origin() {
 	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin '$2'."
 
 	if [ "X$origin" = "X-" ]; then
-		rm ".multigit/$repo.origin"
+		rm ".mgit/$repo.origin"
 	elif [ "$origin" ]; then
-		mkdir -p .multigit
-		echo "$origin" > ".multigit/$repo.origin"
+		mkdir -p .mgit
+		echo "$origin" > ".mgit/$repo.origin"
 	else
-		cat ".multigit/$repo.origin"
+		cat ".mgit/$repo.origin"
 	fi
 }
 
 list_releases() {
-	for f in .multigit/*.release; do
-		f="${f#.multigit/}"
+	for f in .mgit/*.release; do
+		f="${f#.mgit/}"
 		f="${f%.release}"
 		echo "$f"
 	done
 }
 
 show_release() {
-	[ -f ".multigit/$1.release" ] || usage "Unknown release '$1'."
-	cat ".multigit/$1.release"
+	[ -f ".mgit/$1.release" ] || usage "Unknown release '$1'."
+	cat ".mgit/$1.release"
 }
 
 update_release() {
-	"$0" --all version > ".multigit/$1.release"
+	"$0" --all version > ".mgit/$1.release"
 }
 
 checkout_release() {
 	local repo="$1"
-	[ -f ".multigit/$repo.release" ] || usage "Unknown release '$repo'."
-	cat ".multigit/$repo.release" | (IFS=" "; while read repo ver; do
-		[ -d ".multigit/$repo/.git" ] || "$0" clone "$repo"
+	[ -f ".mgit/$repo.release" ] || usage "Unknown release '$repo'."
+	cat ".mgit/$repo.release" | (IFS=" "; while read repo ver; do
+		[ -d ".mgit/$repo/.git" ] || "$0" clone "$repo"
 		local branch="$ver"; [ "$branch" ] || branch=master
 		"$0" "$repo" checkout -B "$branch" "$ver"
 	done)
@@ -428,21 +428,21 @@ git_version() {
 
 git_remove_links() {
 	[ "$OSTYPE" = "msys" ] && usage "Not for Windows."
-	([ "$MULTIGIT_REPO" ] && cd ".multigit/$MULTIGIT_REPO" || exit 1
+	([ "$MULTIGIT_REPO" ] && cd ".mgit/$MULTIGIT_REPO" || exit 1
 	find . ! -path './.git/*' ! -path './.git' ! -path '.' -exec rm -rf {} \; 2>/dev/null)
 }
 git_make_hardlinks() {
 	git_remove_links
 	git ls-files | while read f; do
-		mkdir -p "$(dirname ".multigit/$MULTIGIT_REPO/$f")"
-		ln -f "$f" ".multigit/$MULTIGIT_REPO/$f"
+		mkdir -p "$(dirname ".mgit/$MULTIGIT_REPO/$f")"
+		ln -f "$f" ".mgit/$MULTIGIT_REPO/$f"
 	done
 }
 git_make_symlinks() {
 	git_remove_links
 	git ls-files | while read f; do
-		mkdir -p "$(dirname ".multigit/$MULTIGIT_REPO/$f")"
-		ln -sf "$PWD/$f" ".multigit/$MULTIGIT_REPO/$f"
+		mkdir -p "$(dirname ".mgit/$MULTIGIT_REPO/$f")"
+		ln -sf "$PWD/$f" ".mgit/$MULTIGIT_REPO/$f"
 	done
 }
 
@@ -450,7 +450,7 @@ git_cmd() {
 	local repo="$1"
 	local cmd="$2"
 	shift 2
-	export GIT_DIR=".multigit/$repo/.git"
+	export GIT_DIR=".mgit/$repo/.git"
 	export MULTIGIT_REPO="$repo"
 	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
 	case "$cmd" in
@@ -462,8 +462,8 @@ git_cmd() {
 		"")             git_shell ;;
 		*)
 			# look for and execute a git plugin command
-			if [ -f ".multigit/git-$cmd.sh" ]; then
-				".multigit/git-$cmd.sh" "$@"
+			if [ -f ".mgit/git-$cmd.sh" ]; then
+				".mgit/git-$cmd.sh" "$@"
 			else
 				git "$cmd" "$@"
 			fi
@@ -483,7 +483,7 @@ git_cmd_all() {
 cd_root() {
 	local pwd1
 	while [ "$PWD" != "$pwd1" ]; do
-		[ -d .multigit ] && return
+		[ -d .mgit ] && return
 		pwd1="$PWD"
 		cd .. || usage "Could not cd to '$PWD/..'."
 	done
@@ -517,8 +517,8 @@ case "$cmd" in
 		;;
 	*)
 		# look for and execute a plugin command
-		if [ -f ".multigit/$cmd.sh" ]; then
-			".multigit/$cmd.sh" "$@"
+		if [ -f ".mgit/$cmd.sh" ]; then
+			".mgit/$cmd.sh" "$@"
 		else
 			git_cmd "$cmd" "$@"
 		fi
