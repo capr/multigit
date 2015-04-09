@@ -34,7 +34,7 @@ git init foo:
 
 	mkdir -p .multigit/foo
 	export GIT_DIR=.multigit/foo/.git
-	git init     # this will create .multigit/foo/.git as opposed to .git
+	git init                  # this will create .multigit/foo/.git as opposed to .git
 	git config --local core.worktree ../../..                   # relative to GIT_DIR
 	git config --local core.excludesfile .multigit/foo.exclude  # instead of .gitignore
 	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude  # "ignore all"
