@@ -119,7 +119,8 @@ This snapshot can be later restored with:
 Needless to say, you can add these release files to your meta package,
 just like with the .baseurl and .origin files before.
 
-Another way to get a snapshot of the entire project is with:
+Another quick way to get a snapshot of the project without using release
+files is with:
 
 	$ mgit --all ver
 
