@@ -176,9 +176,9 @@ using it, do it from a subshell.
 ## Where is multigit used?
 
 Multigit is the package manager for [luapower](https://luapower.com).
-The [meta-package](https://github.com/luapower/luapower-repos) is just
-like any other repo, and contains the list of packages to clone by name
-and some multigit plugins specific to luapower.
+The [meta-package](https://github.com/luapower/luapower-repos) contains
+the list of packages in the distribution and a few handy multigit plugins
+specific to luapower.
 
 ## What multigit plugins?
 
