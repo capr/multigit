@@ -142,11 +142,11 @@ And later clone/checkout the repos with:
 
 command                               | description
 ------------------------------------- | --------------------------------------
-mgit ls-modified                      | list modified files across all repos
-mgit ls-unpushed                      | list repos ahead of origin
-mgit ls-untracked                     | list files untracked by any repo
-mgit ls-double-tracked                | list files tracked by multiple repos
-mgit remove [--dry] REPO ...          | remove repos from disk (!)
+`mgit ls-modified`                    | list modified files across all repos
+`mgit ls-unpushed`                    | list repos ahead of origin
+`mgit ls-untracked`                   | list files untracked by any repo
+`mgit ls-double-tracked`              | list files tracked by multiple repos
+`mgit remove [--dry] REPO ...`        | remove repos from disk (!)
 
 
 There's more stuff, type `mgit` to see.
