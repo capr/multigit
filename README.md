@@ -35,14 +35,15 @@ mgit init foo:
 
 	mkdir -p .mgit/foo
 	export GIT_DIR=.mgit/foo/.git
-	git init                  # this will create .mgit/foo/.git as opposed to .git
-	git config --local core.worktree ../../..                   # relative to GIT_DIR
-	git config --local core.excludesfile .mgit/foo.exclude  # instead of .gitignore
+	git init                                                  # create .mgit/foo/.git
+	git config --local core.worktree ../../..                 # relative to GIT_DIR
+	git config --local core.excludesfile .mgit/foo.exclude    # instead of .gitignore
 	[ -f .mgit/foo.exclude ] || echo '*' > .mgit/foo.exclude  # "ignore all"
 
 mgit foo ls-files:
 
-	GIT_DIR=.mgit/foo/.git git ls-files  # list files of foo
+	export GIT_DIR=.mgit/foo/.git    # set git to work on foo
+	git ls-files                     # list files of foo
 
 ## How do I use it?
 
