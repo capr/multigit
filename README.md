@@ -30,6 +30,7 @@ as multigit is, it's still yet another script that you have to deploy.
 Don't worry about it, it's mostly fluff. The gist of it it's only 6 lines:
 
 git init foo:
+
 	mkdir -p .multigit/foo
 	export GIT_DIR=.multigit/foo/.git
 	git init
@@ -38,6 +39,7 @@ git init foo:
 	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude
 
 git foo:
+
 	GIT_DIR=.multigit/foo/.git git
 
 ## How do I use it?
