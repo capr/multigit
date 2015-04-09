@@ -19,7 +19,7 @@ project, similar to a union filesystem, where each repository is a layer.
 
 ## How do I use it?
 
-> The code below assumes mgit is somewhere in your PATH (although not required).
+> Although not required, the examples assume mgit is somewhere in your PATH.
 
 Let's see a bare bones example:
 
