@@ -87,8 +87,8 @@ mgit foo ls-files:
 
 ## But do I have to type the full URL every time?
 
-	$ mgit baseurl https://github.com/bob/    # adds .mgit/bob.baseurl
-	$ mgit clone bob/foo bob/bar              # adds .mgit/foo.origin and .mgit/bar.origin
+	$ mgit baseurl https://github.com/bob/  # adds .mgit/bob.baseurl
+	$ mgit clone bob/foo bob/bar            # adds .mgit/foo.origin and .mgit/bar.origin
 
 Now that bob is known as a remote, and both foo's and bar's origins are
 known too (they are set to `bob`), next time it will be enough to type
