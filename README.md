@@ -17,6 +17,13 @@ only allow subprojects to deploy files in their own subdirectory.
 Multigit allows subprojects to deploy files in any directory of the
 project, similar to a union filesystem, where each repository is a layer.
 
+## How do I install it?
+
+Multigit is a simple shell script with no dependencies. You can either
+put it somewhere in your PATH, or you can clone it everywhere
+you want to create a multigit project in, and call it as `./mgit`
+(or `mgit` on Windows).
+
 ## How do I use it?
 
 > Although not required, the examples below assume mgit is
