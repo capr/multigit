@@ -1,7 +1,8 @@
 # multigit
 
 #### layered git repositories
-<sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub>
+<sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub><br>
+<sub>Tested on Windows, Linux and OSX</sub>
 
 Multigit allows you to check out multiple git repositories over a
 common directory and provides simple tools that let you continue
@@ -153,3 +154,8 @@ place the help section of the added commands.
 
 Look at [luapower-repos](https://github.com/luapower/luapower-repos)
 for a real-world example of this.
+
+## Related efforts
+
+The most similar project that I was able to find is [vcsh](https://github.com/RichiH/vcsh).
+It even has a [video presentation](http://mirror.as35701.net/video.fosdem.org//2012/lightningtalks/vcsh.webm).
