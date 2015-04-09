@@ -22,7 +22,7 @@ Simply by telling git to clone all the repositories into a common
 work tree. The git trees are kept in `.multigit/<repo>/.git` and the
 work tree is always '.'.
 
-> This is such basic and such useful functionality that it should
+> This is such basic and useful functionality that it should
 be built into `git clone` and `git init` really. As dead simple
 as multigit is, it's still yet another script that you have to deploy.
 
@@ -34,10 +34,10 @@ git init foo:
 
 	mkdir -p .multigit/foo
 	export GIT_DIR=.multigit/foo/.git
-	git init
-	git config --local core.worktree ../../..
-	git config --local core.excludesfile .multigit/foo.exclude
-	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude
+	git init     # this will create .multigit/foo/.git as opposed to .git
+	git config --local core.worktree ../../..                   # relative to GIT_DIR
+	git config --local core.excludesfile .multigit/foo.exclude  # instead of .gitignore
+	[ -f .multigit/foo.exclude ] || echo '*' > .multigit/foo.exclude  # "ignore all"
 
 git foo:
 
