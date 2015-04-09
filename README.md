@@ -76,12 +76,42 @@ appropriate to each repo. Given that all repos now share the same
 namespace, you need to be explicit about which parts of that namespace
 are "reserved" for which repo.
 
+## How do I clone repos?
+
+	$ mkdir project
+	$ cd project
+	$ mgit clone https://github.com/bob/foo
+	$ mgit clone https://github.com/bob/bar
+
+## But do I have to type the full URL every time?
+
+	$ mgit baseurl https://github.com/bob/    # adds .multigit/bob.baseurl
+	$ mgit clone bob/foo bob/bar              # adds .multigit/foo.origin and .multigit/bar.origin
+
+Now that bob is known as a remote, and both foo's and bar's origins are
+known too (they are set to `bob`), next time it will be enough to type
+`mgit clone foo bar`. Which brings us to the next question...
+
+## How do I create package collections?
+
+	$ mgit init meta
+	$ mgit meta add -f .mgit/bob.baseurl
+	$ mgit meta add -f .mgit/foo.origin
+	$ mgit meta add -f .mgit/bar.origin
+	$ mgit meta commit -m "bob's place; foo and bar packages"
+
+The meta repo like any other another repo (and it doesn't have to be
+called meta either). It contains the information necessary to clone
+foo and bar by name alone. So by cloning meta into your project
+(by it's full url), you can then clone foo and bar with `mgit clone foo bar`,
+or simply `mgit clone-all`.
+
 ## Who uses it?
 
 Multigit is the package manager for [luapower](https://luapower.com).
-The [meta-package](https://github.com/luapower/luapower-repos) contains
-the list of packages to clone by name and some multigit plugins specific
-to luapower.
+The [meta-package](https://github.com/luapower/luapower-repos) is just
+like any other repo, and contains the list of packages to clone by name
+and some multigit plugins specific to luapower.
 
 ## What multigit plugins?
 
