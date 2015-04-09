@@ -19,7 +19,7 @@ usage() {
 	echo "   ls-all                       list all known repos"
 	echo "   ls-uncloned                  list all known but not cloned repos"
 	echo
-	echo "   ls-modified                  list files that were modified locally"
+	echo "   ls-modified                  list modified files across all repos"
 	echo "   ls-unpushed                  list repos that are ahead of origin"
 	echo "   ls-untracked                 list files untracked by any repo"
 	echo "   ls-double-tracked            list files tracked by multiple repos"
@@ -27,7 +27,7 @@ usage() {
 	echo "   init REPO [git-init-options...]        create a local repo"
 	echo "   clone [REMOTE/]REPO|URL[=version] ...  clone one ore more repos"
 	echo "   clone-all [git-fetch-options]          clone all known uncloned repos"
-	echo "   remove [--dry] REPO ...                remove cloned repos from disk (!)"
+	echo "   remove [--dry] REPO ...                remove repos from disk (!)"
 	echo
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
 	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"

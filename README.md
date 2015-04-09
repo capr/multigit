@@ -111,7 +111,8 @@ It holds the information necessary to clone foo and bar by name alone.
 So by cloning `meta` into your project (by it's full url), you can then
 clone `foo` and `bar` with `mgit clone foo bar`, or simply `mgit clone-all`.
 This makes for a simple way to manage and share module collections
-that later can be cloned back wholesale with `mgit clone-all`.
+that later can be cloned back wholesale with `mgit clone-all` (and can be
+queried with `mgit ls-all`).
 
 ## But this will always clone master. How do I lock versions?
 
@@ -136,6 +137,19 @@ files is with:
 And later clone/checkout the repos with:
 
 	$ mgit clone foo=701d080 bar=0fefd96
+
+## What else can it do?
+
+command                               | description
+------------------------------------- | --------------------------------------
+mgit ls-modified                      | list modified files across all repos
+mgit ls-unpushed                      | list repos ahead of origin
+mgit ls-untracked                     | list files untracked by any repo
+mgit ls-double-tracked                | list files tracked by multiple repos
+mgit remove [--dry] REPO ...          | remove repos from disk (!)
+------------------------------------- | --------------------------------------
+
+There's more stuff, type `mgit` to see.
 
 ## How does this work anyway?
 
