@@ -143,7 +143,8 @@ and some multigit plugins specific to luapower.
 
 Plugins allows extending multigit with project-specific scripts
 that are exposed as multigit commands (like build scripts, etc.).
-Plugin scripts can be included in any of the repo(s) of your project.
+Plugin scripts can be included say, in the meta package of your project.
+The way they work is very simple:
 
 `mgit <repo> <command> ...` will try to run
 `.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly
