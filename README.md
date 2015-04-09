@@ -85,7 +85,7 @@ Or you can type git commands directly without a subshell:
 	$ mgit clone https://github.com/bob/bar
 
 This will clone both repos into the current directory
-(there's no "target directory" option).
+(there's no "target directory" arg).
 
 ## But do I have to type the full URL every time?
 
@@ -104,14 +104,14 @@ to type `mgit clone foo bar`. Which brings us to the next question...
 	$ mgit meta add -f .mgit/bar.origin    # add bar's origin to meta
 	$ mgit meta commit -m "bob's place; foo and bar modules"
 
-The meta repo is like any other layered repo (and it doesn't have to be
-called meta either, and it doesn't have to be the only repo that contains
-meta-information). It contains the information necessary to clone
-foo and bar by name alone. So by cloning `meta` into your project
-(by it's full url), you can then clone `foo` and `bar` with
-`mgit clone foo bar`, or simply `mgit clone-all`. This makes for
-a simple way to manage and share module collections that later can be
-cloned back wholesale with `mgit clone-all`.
+The meta repo is like any other layered repo, it just so happens that it
+tracks files from `.mgit` (and it doesn't have to be called meta either,
+and it doesn't have to be the only repo that contains meta-information).
+It holds the information necessary to clone foo and bar by name alone.
+So by cloning `meta` into your project (by it's full url), you can then
+clone `foo` and `bar` with `mgit clone foo bar`, or simply `mgit clone-all`.
+This makes for a simple way to manage and share module collections
+that later can be cloned back wholesale with `mgit clone-all`.
 
 ## But this will always clone master. How do I lock versions?
 
@@ -131,10 +131,11 @@ Another quick way to get a snapshot of the project without using .release
 files is with:
 
 	$ mgit --all ver
+	foo=701d080 bar=0fefd96
 
 And later clone/checkout the repos with:
 
-	$ mgit clone <the output of mgit --all ver>
+	$ mgit clone foo=701d080 bar=0fefd96
 
 ## How does this work anyway?
 
