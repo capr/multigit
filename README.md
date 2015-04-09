@@ -19,7 +19,11 @@ project, similar to a union filesystem, where each repository is a layer.
 
 ## How do I use it?
 
-> Although not required, the examples assume mgit is somewhere in your PATH.
+> Although not required, the examples below assume mgit is
+somewhere in your PATH. Multigit is a simple bash script with
+no dependencies so you can make it available with a simple
+`sudo ln -s ~/multigit/mgit /usr/bin/local`
+
 
 Let's see a bare bones example:
 
