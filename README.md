@@ -140,9 +140,9 @@ And later clone/checkout the repos with:
 
 ## How does it use the current directory?
 
-Just like git, mgit scans for a `.mgit` dir to find the root of your project,
-and changes the current directory to that directory, and everything else
-happens from there.
+Just like git, mgit scans the current directory and its parents for
+a `.mgit` dir, and changes the current directory to that directory,
+and everything else happens from there.
 
 ## Where is multigit used?
 
