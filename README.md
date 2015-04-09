@@ -30,14 +30,21 @@ Let's see a bare bones example:
 
 	$ mkdir project
 	$ cd project
+	$
 	$ mgit init foo                # create layered repo foo
 	$ mgit init bar                # create layered repo bar
+
+	$ mgit ls                      # list our repos
+	foo
+	bar
+
 	$ touch foo.txt                # create empty file foo.txt
 	$ touch bar.txt                # create empty file bar.txt
 	$ mgit foo add -f foo.txt      # add foo.txt to project foo
 	$ mgit bar add -f bar.txt      # add bar.txt to project bar
 	$ mgit foo commit -m "init"    # commit on foo
 	$ mgit bar commit -m "init"    # commit on bar
+	$
 	$ ls
 	foo.txt bar.txt                # foo.txt and bar.txt are in the same dir
 	$ mgit foo ls-files
