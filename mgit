@@ -435,7 +435,7 @@ git_shell() {
 		exec "$COMSPEC" /k
 	else
 		export PS1="[$MULTIGIT_REPO] \u@\h:\w\$ "
-		exec "$SHELL" -i
+		exec "$SHELL" --norc -i
 	fi
 }
 
