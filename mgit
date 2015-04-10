@@ -13,7 +13,7 @@ usage() {
 	echo " multigit 1.0 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
-	echo " USAGE: $0 ..."
+	echo " USAGE: mgit ..."
 	echo
 	echo "   ls                           list cloned repos"
 	echo "   ls-all                       list all known repos"
@@ -42,6 +42,7 @@ usage() {
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update           create/update a release based on HEADs"
 	echo "   release REL checkout         clone/checkout repos from a release"
+	echo "   release REL remove           remove a release file"
 	echo
 	echo "   [help|--help]                show this screen"
 	echo
@@ -108,16 +109,23 @@ existing_files() {
 
 list_untracked() {
 	check_root
-	comm -23 <(existing_files) <(tracked_files)
+	tracked_files > $$.tmp
+	# NOTE: grep may be slow but there's no comm on Git for Windows
+	existing_files | grep -v ^$$.tmp$ | grep -v -F -w -f $$.tmp
+	rm $$.tmp
 }
 
 list_double_tracked() {
 	check_root
-	for repo in `list_cloned`; do
-		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
-			printf "%-16s %s\n" "$repo" "$f"
-		done
-	done | grep -F -w -f <(tracked_files -d)
+	# NOTE: using temp file because bash for Windows can't do <(tracked_files -d)
+	tracked_files -d > $$.tmp
+	[ "$(cat $$.tmp)" ] && \
+		for repo in `list_cloned`; do
+			GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
+				printf "%-16s %s\n" "$repo" "$f"
+			done
+		done | grep -F -w -f $$.tmp
+	rm $$.tmp
 }
 
 clone_all() {
@@ -227,8 +235,8 @@ clone_one() {
 		return
 	}
 	git branch --track master origin/master
-	local branch="$ver"; [ "$branch" ] || branch=master
-	git checkout -B $branch $ver
+	local branch="ver-$ver"; [ "$ver" ] || branch=master
+	git checkout -B "$branch" $ver
 
 	# if fetch was successful, (re)register the repo's origin
 	if [ "$origin" != "$rorigin" ]; then
@@ -274,6 +282,14 @@ remove_one() {
 		echo "HINT:  If you know that there are no checked out files,"
 		echo "HINT:  feel free to \`rm -rf .mgit/$1/ .mgit/$1.exclude\`."
 		return
+	}
+
+	# ask for confirmation if there are files to delete
+	[ "$files" ] && {
+		local n=$(echo "$files" | wc -l)
+		echo "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
+		read yes
+		[ "$yes" = "yes" ] || { echo "Canceled."; return; }
 	}
 
 	# remove files
@@ -381,13 +397,17 @@ update_release() {
 	"$0" --all version > ".mgit/$1.release"
 }
 
+remove_release() {
+	rm ".mgit/$1.release"
+}
+
 checkout_release() {
 	local repo="$1"
 	[ -f ".mgit/$repo.release" ] || usage "Unknown release '$repo'."
 	cat ".mgit/$repo.release" | (IFS=" "; while read repo ver; do
 		[ -d ".mgit/$repo/.git" ] || "$0" clone "$repo"
-		local branch="$ver"; [ "$branch" ] || branch=master
-		"$0" "$repo" checkout -B "$branch" "$ver"
+		local branch="ver-$ver"; [ "$ver" ] || branch=master
+		"$0" "$repo" checkout -B "$branch" $ver
 	done)
 }
 
@@ -400,6 +420,7 @@ release() {
 		"")       show_release "$rel" ;;
 		update)   update_release "$rel" ;;
 		checkout) checkout_release "$rel" ;;
+		remove)   remove_release "$rel" ;;
 		*)        usage "Invalid release commnad '$2'."
 	esac
 }
@@ -509,6 +530,7 @@ case "$cmd" in
 	ls-double-tracked) list_double_tracked ;;
 	init)         init "$@" ;;
 	clone)        clone "$@" ;;
+	clone-all)    clone_all "$@" ;;
 	remove)       remove "$@" ;;
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;

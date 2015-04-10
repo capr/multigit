@@ -37,8 +37,8 @@ Let's see a bare bones example:
 	foo
 	bar
 
-	$ touch foo.txt                # create empty file foo.txt
-	$ touch bar.txt                # create empty file bar.txt
+	$ echo > foo.txt               # create file foo.txt
+	$ echo > bar.txt               # create file bar.txt
 	$ mgit foo add -f foo.txt      # add foo.txt to project foo
 	$ mgit bar add -f bar.txt      # add bar.txt to project bar
 	$ mgit foo commit -m "init"    # commit on foo
@@ -66,6 +66,10 @@ are "reserved" for which repos.
 You can use git direcly on your layered repos with a subshell:
 
 	$ mgit foo
+	Entering subshell: git commands will affect the repo 'foo'.
+	Type `exit' to exit subshell.
+	A  foo.txt
+
 	[foo] $ git ls-files
 	foo.txt
 	[foo] $ exit
@@ -212,6 +216,12 @@ The way they work is very simple:
 
 Look at [luapower-repos](https://github.com/luapower/luapower-repos)
 for a real-world example of this.
+
+## Limitations
+
+  * No way to specify a different branch when cloning (must switch it after).
+  * No way to specify a different branch when making releases.
+  * No way of registering multiple remotes.
 
 ## Related efforts
 
