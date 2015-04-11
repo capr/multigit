@@ -120,7 +120,7 @@ and it doesn't have to be the _only_ repo containing meta-information).
 
 Maintaining a `meta` repo for a project allows the users of that project
 to clone the meta repo and then clone all other repos
-with simply `mgit clone-all` (and list them with `mgit ls-all`).
+with `mgit clone-all` (and list them with `mgit ls-all`).
 This makes for a simple way to manage and share module collections
 that later can be cloned back wholesale.
 
