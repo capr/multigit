@@ -159,7 +159,7 @@ command                               | description
 `mgit ls-unpushed`                    | list repos ahead of origin
 `mgit ls-untracked`                   | list files untracked by any repo
 `mgit ls-double-tracked`              | list files tracked by multiple repos
-`mgit remove [--dry] REPO ...`        | remove repos from disk (!)
+`mgit remove [--dry] REPO ...`        | remove repos from disk
 
 
 There's more stuff, type `mgit` to see.
@@ -230,7 +230,8 @@ for a real-world example of this.
 
   * No way to specify a different branch when cloning (must switch it after).
   * No way to specify a different branch when making releases.
-  * No way of registering multiple remotes.
+  * No way to register multiple remotes for the same repo and specify
+  the remote when cloning.
 
 ## Related efforts
 
