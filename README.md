@@ -137,7 +137,7 @@ This snapshot can later be restored with:
 
 	$ mgit release 1.0 checkout
 
-Needless to say, you can add the .release file to your meta repo too,
+> Needless to say, you can add the .release file to your meta repo too,
 just like with the .baseurl and .origin files before, so that other people
 will be able to clone the project at that specific release point.
 
@@ -150,6 +150,16 @@ files is with:
 And later clone/checkout the repos with:
 
 	$ mgit clone foo=701d080 bar=0fefd96
+
+Tag releases can be made with:
+
+	$ mgit release 1.0 update tag
+
+Tag releases only record the current tag as opposed to the exact
+full version of the packages. This allows you to make stable releases
+even when some packages are "unstable" (i.e. they contain commits above the
+latest tag). It also allows the controversial practice of updating a tag's
+target without having to make a new release.
 
 ## What else can it do?
 

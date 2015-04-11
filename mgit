@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 1.0 - git wrapper for working with overlaid repos."
+	echo " multigit 1.1 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -35,12 +35,12 @@ usage() {
 	echo "   REPO                         start a shell for using git on a repo"
 	echo "   REPO|--all command ...       execute any git command on a repo"
 	echo "   REPO|--all exec ...          execute a shell command in a repo context"
-   echo "   REPO|--all ver[sion]         show repo version (enum or list)"
+	echo "   REPO|--all ver[sion] [tag]   show repo version or tag (as enum or list)"
 	echo "   REPO|--all make-symlinks     make symbolic links in .mgit/REPO"
 	echo "   REPO|--all make-hardlinks    make hard links in .mgit/REPO"
 	echo
 	echo "   release [REL]                show a release or list releases"
-	echo "   release REL update           create/update a release based on HEADs"
+	echo "   release REL update [tag]     create/update a release based on HEADs"
 	echo "   release REL checkout         clone/checkout repos from a release"
 	echo "   release REL remove           remove a release file"
 	echo
@@ -394,7 +394,7 @@ show_release() {
 }
 
 update_release() {
-	"$0" --all version > ".mgit/$1.release"
+	"$0" --all version $2 > ".mgit/$1.release"
 }
 
 remove_release() {
@@ -413,15 +413,17 @@ checkout_release() {
 
 release() {
 	local rel="$1"
+	local cmd="$2"
 	rel="${rel//[[:blank:]]/}" # spaces not allowed
 	[ "$rel" -a "$1" != "$rel" ] && usage "Invalid release name '$1'."
 	[ "$rel" ] || { list_releases; return; }
-	case "$2" in
-		"")       show_release "$rel" ;;
-		update)   update_release "$rel" ;;
-		checkout) checkout_release "$rel" ;;
-		remove)   remove_release "$rel" ;;
-		*)        usage "Invalid release commnad '$2'."
+	shift 2
+	case "$cmd" in
+		"")       show_release "$rel" "$@" ;;
+		update)   update_release "$rel" "$@" ;;
+		checkout) checkout_release "$rel" "$@" ;;
+		remove)   remove_release "$rel" "$@" ;;
+		*)        usage "Invalid release command '$cmd'."
 	esac
 }
 
@@ -440,13 +442,21 @@ git_shell() {
 }
 
 git_ver() {
-	printf "$MULTIGIT_REPO=$(git describe --tags --long --always) "
+	if [ "$1" = "tag" ]; then
+		printf "$MULTIGIT_REPO=$(git describe --tags --abbrev=0) "
+	else
+		printf "$MULTIGIT_REPO=$(git describe --tags --long --always) "
+	fi
 	[ "$ALL" ] || echo
 }
 
 git_version() {
 	printf "%-20s" "$MULTIGIT_REPO"
-	git describe --tags --long --always
+	if [ "$1" = "tag" ]; then
+		git describe --tags --abbrev=0
+	else
+		git describe --tags --long --always
+	fi
 }
 
 git_remove_links() {
@@ -478,11 +488,11 @@ git_cmd() {
 	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
 	case "$cmd" in
 		exec)           "$@" ;;
-		ver)            git_ver ;;
-		version)        git_version ;;
-		make-symlinks)  git_make_symlinks ;;
-		make-hardlinks) git_make_hardlinks ;;
-		"")             git_shell ;;
+		ver)            git_ver "$@" ;;
+		version)        git_version "$@" ;;
+		make-symlinks)  git_make_symlinks "$@" ;;
+		make-hardlinks) git_make_hardlinks "$@" ;;
+		"")             git_shell "$@" ;;
 		*)
 			# look for and execute a git plugin command
 			if [ -f ".mgit/git-$cmd.sh" ]; then
