@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 1.1 - git wrapper for working with overlaid repos."
+	echo " multigit 2.0 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -428,6 +428,7 @@ release() {
 }
 
 git_shell() {
+	cd "$PWD0" || return
 	echo "Entering subshell: git commands will affect the repo '$MULTIGIT_REPO'."
 	echo "Type \`exit' to exit subshell."
 	git status -s
@@ -483,11 +484,11 @@ git_cmd() {
 	local repo="$1"
 	local cmd="$2"
 	shift 2
-	export GIT_DIR=".mgit/$repo/.git"
+	export GIT_DIR="$PWD/.mgit/$repo/.git"
 	export MULTIGIT_REPO="$repo"
 	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
 	case "$cmd" in
-		exec)           "$@" ;;
+		exec)           cd "$PWD0" && "$@" ;;
 		ver)            git_ver "$@" ;;
 		version)        git_version "$@" ;;
 		make-symlinks)  git_make_symlinks "$@" ;;
@@ -498,7 +499,7 @@ git_cmd() {
 			if [ -f ".mgit/git-$cmd.sh" ]; then
 				".mgit/git-$cmd.sh" "$@"
 			else
-				git "$cmd" "$@"
+				cd "$PWD0" && git "$cmd" "$@"
 			fi
 		;;
 	esac

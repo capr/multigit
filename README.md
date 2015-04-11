@@ -205,10 +205,9 @@ mgit foo ls-files:
 ## What's its relation to the current directory?
 
 Just like git, mgit scans the current directory and its parents for
-a `.mgit` dir, and if found, it sets the current directory to that directory,
-and everything else happens from there. If you want to use git
-from a subdirectory and you want that to be the current directory while
-using it, do it from a subshell.
+a `.mgit` dir, and if found, it sets the current directory to that,
+and everything else happens from there, except starting a subshell
+and executing git commands which run in the current directory.
 
 ## Where is multigit used?
 
