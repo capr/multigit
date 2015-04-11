@@ -102,21 +102,30 @@ to type `mgit clone foo bar`. Which brings us to the next question...
 
 ## How do I manage module collections?
 
+Every time you clone a repo with `mgit clone`, a file `.mgit/foo.origin`
+is created which contains the origin url of that repo, which allows you
+to clone it by name alone. These files are not tracked by default,
+they're just sitting there, but there's nothing stopping you from
+creating a "meta" repo and start tracking them:
+
 	$ mgit init meta
 	$ mgit meta add -f .mgit/bob.baseurl   # add bob's baseurl to meta
 	$ mgit meta add -f .mgit/foo.origin    # add foo's origin to meta
 	$ mgit meta add -f .mgit/bar.origin    # add bar's origin to meta
 	$ mgit meta commit -m "bob's place; foo and bar modules"
 
-The meta repo is like any other layered repo, it just so happens that it
+> The meta repo is like any other layered repo, it just so happens that it
 tracks files from `.mgit` (and it doesn't have to be called meta either,
-and it doesn't have to be the only repo that contains meta-information).
-It holds the information necessary to clone foo and bar by name alone.
-So by cloning `meta` into your project (by it's full url), you can then
-clone `foo` and `bar` with `mgit clone foo bar`, or simply `mgit clone-all`.
+and it doesn't have to be the _only_ repo containing meta-information).
+
+Maintaining a `meta` repo for a project (by it's full url) allows the
+users of that project to clone the meta repo and then clone all other repos
+with simply `mgit clone-all` (and list them with `mgit ls-all`).
 This makes for a simple way to manage and share module collections
-that later can be cloned back wholesale with `mgit clone-all` (and can be
-queried with `mgit ls-all`).
+that later can be cloned back wholesale.
+
+Note that repos created with `mgit init foo` don't create an origin file.
+You can add that yourself after you know it, with `mgit origin foo <url>`.
 
 ## But this will always clone master. How do I lock versions?
 
