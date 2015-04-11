@@ -19,7 +19,7 @@ usage() {
 	echo "   ls-all                       list all known repos"
 	echo "   ls-uncloned                  list all known but not cloned repos"
 	echo
-	echo "   ls-modified                  list modified files across all repos"
+	echo "   ls-modified|st               list modified files across all repos"
 	echo "   ls-unpushed                  list repos that are ahead of origin"
 	echo "   ls-untracked                 list files untracked by any repo"
 	echo "   ls-double-tracked            list files tracked by multiple repos"
@@ -535,6 +535,7 @@ case "$cmd" in
 	ls-all)       list_known ;;
 	ls-uncloned)  list_uncloned ;;
 	ls-modified)  list_modified ;;
+	st)           list_modified ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
