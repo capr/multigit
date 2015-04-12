@@ -17,6 +17,13 @@ only allow subprojects to deploy files in their own subdirectory.
 Multigit allows subprojects to deploy files in any directory of the
 project, similar to a union filesystem, where each repository is a layer.
 
+Some examples where this combination of change management
+and module management could be useful:
+
+  * manage customizations made to a web app in a separate repository.
+  * putting your home directory under source control.
+  * package and/or config manager for a Linux distro.
+
 ## How do I install it?
 
 Multigit is a simple shell script with no dependencies. You can either
