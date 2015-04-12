@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 2.0 - git wrapper for working with overlaid repos."
+	echo " multigit 2.1 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -32,12 +32,12 @@ usage() {
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
 	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
 	echo
-	echo "   REPO                         start a shell for using git on a repo"
-	echo "   REPO|--all command ...       execute any git command on a repo"
-	echo "   REPO|--all exec ...          execute a shell command in a repo context"
-	echo "   REPO|--all ver[sion] [tag]   show repo version or tag (as enum or list)"
-	echo "   REPO|--all make-symlinks     make symbolic links in .mgit/REPO"
-	echo "   REPO|--all make-hardlinks    make hard links in .mgit/REPO"
+	echo "   REPO1,...                       start a shell for using git on a repo"
+	echo "   REPO1,...|--all command ...     execute any git command on a repo"
+	echo "   REPO1,...|--all exec ...        execute a shell command in a repo context"
+	echo "   REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
+	echo "   REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
+	echo "   REPO1,...|--all make-hardlinks  make hard links in .mgit/REPO"
 	echo
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update [tag]     create/update a release based on HEADs"
@@ -109,6 +109,7 @@ existing_files() {
 
 list_untracked() {
 	check_root
+	# NOTE: using a temp file because bash on Windows can't do <(tracked_files)
 	tracked_files > $$.tmp
 	# NOTE: grep may be slow but there's no comm on Git for Windows
 	existing_files | grep -v ^$$.tmp$ | grep -v -F -w -f $$.tmp
@@ -117,7 +118,7 @@ list_untracked() {
 
 list_double_tracked() {
 	check_root
-	# NOTE: using temp file because bash for Windows can't do <(tracked_files -d)
+	# NOTE: using a temp file because bash on Windows can't do <(tracked_files -d)
 	tracked_files -d > $$.tmp
 	[ "$(cat $$.tmp)" ] && \
 		for repo in `list_cloned`; do
@@ -173,7 +174,7 @@ clone_one() {
 
 	# extract `=version` if any
 	ver="${arg##*=}"
-	[ "$ver" == "$arg" ] && ver=""
+	[ "$ver" = "$arg" ] && ver=""
 	arg="${arg%=*}"
 
 	# check if the arg is a full url or just `[origin/]name`
@@ -273,7 +274,7 @@ remove_one() {
 	}
 
 	# don't remove from a subshell
-	[ "$MULTIGIT_REPO" == "$1" ] && \
+	[ "$MULTIGIT_REPO" = "$1" ] && \
 		usage "Refusing to remove '$1' from a subshell."
 
 	# get tracked files for this repo
@@ -435,10 +436,10 @@ git_shell() {
 	echo
 	if [ "$OSTYPE" = "msys" ]; then
 		export PROMPT="[$MULTIGIT_REPO] \$P\$G"
-		exec "$COMSPEC" /k
+		"$COMSPEC" /k
 	else
 		export PS1="[$MULTIGIT_REPO] \u@\h:\w\$ "
-		exec "$SHELL" --norc -i
+		"$SHELL" --norc -i
 	fi
 }
 
@@ -448,7 +449,6 @@ git_ver() {
 	else
 		printf "$MULTIGIT_REPO=$(git describe --tags --long --always) "
 	fi
-	[ "$ALL" ] || echo
 }
 
 git_version() {
@@ -480,7 +480,7 @@ git_make_symlinks() {
 	done
 }
 
-git_cmd() {
+git_cmd_one() {
 	local repo="$1"
 	local cmd="$2"
 	shift 2
@@ -497,7 +497,7 @@ git_cmd() {
 		*)
 			# look for and execute a git plugin command
 			if [ -f ".mgit/git-$cmd.sh" ]; then
-				".mgit/git-$cmd.sh" "$@"
+				PWD0="$PWD0" ".mgit/git-$cmd.sh" "$@"
 			else
 				cd "$PWD0" && git "$cmd" "$@"
 			fi
@@ -507,11 +507,19 @@ git_cmd() {
 	export MULTIGIT_REPO=
 }
 
-git_cmd_all() {
-	for repo in `list_cloned`; do
-		ALL=1 git_cmd "$repo" "$@"
-	done
-	[ "$1" == "ver" ] && echo
+git_cmd() {
+	local repos="$1"; shift
+	if [ "$repos" = "--all" ]; then
+		[ "$1" ] || usage "Refusing to start a subshell for each repo."
+		for repo in `list_cloned`; do
+			git_cmd_one "$repo" "$@"
+		done
+	else
+		(IFS=","; for repo in $repos; do
+			git_cmd_one "$repo" "$@"
+		done)
+	fi
+	[ "$1" = "ver" ] && echo
 }
 
 cd_root() {
@@ -547,10 +555,6 @@ case "$cmd" in
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
-	--all)
-		[ "$1" ] || usage "Refusing to start a subshell for each repo."
-		git_cmd_all "$@"
-		;;
 	*)
 		# look for and execute a plugin command
 		if [ -f ".mgit/$cmd.sh" ]; then
