@@ -83,7 +83,7 @@ list_uncloned() {
 
 list_modified() {
 	check_root
-	git_cmd_all status -s
+	"$0" --all status -s
 }
 
 list_unpushed() {
