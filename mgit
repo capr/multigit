@@ -24,9 +24,10 @@ usage() {
 	echo "   ls-untracked                 list files untracked by any repo"
 	echo "   ls-double-tracked            list files tracked by multiple repos"
 	echo
-	echo "   init REPO [git-init-options...]        create a local repo"
+	echo "   init REPO                              create a local repo"
 	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
-	echo "   clone-all [git-fetch-options]          clone all known uncloned repos"
+	echo "   clone-all                              clone all known uncloned repos"
+	echo "   clone-release REL|RELFILE              clone all repos from a release file"
 	echo "   remove [--dry] REPO ...                remove repos from disk (!)"
 	echo
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
@@ -41,7 +42,7 @@ usage() {
 	echo
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update [tag]     create/update a release based on HEADs"
-	echo "   release REL checkout         clone/checkout repos from a release"
+	echo "   release REL clone            clone all repos from a release"
 	echo "   release REL remove           remove a release file"
 	echo
 	echo "   [help|--help]                show this screen"
@@ -130,7 +131,6 @@ list_double_tracked() {
 }
 
 clone_all() {
-	export MULTIGIT_FETCH_OPTS="$@"
 	for repo in `list_uncloned`; do
 		"$0" clone "$repo"
 	done
@@ -141,7 +141,6 @@ init() {
 	name="${name//[^-_0123456789abcdefghijklmnopqrstuvwxyz]/}"
 	[ "$name" = "$1" ] || \
 		usage "Invalid name: '$1'. Only letters, numbers, '-' and '_' allowed."
-	shift
 
 	# check that the repo is not already cloned
 	[ -d ".mgit/$name" ] && {
@@ -151,7 +150,7 @@ init() {
 
 	mkdir -p ".mgit/$name"
 	export GIT_DIR=".mgit/$name/.git"
-	git init "$@"
+	git init $MULTIGIT_INIT_OPTS
 	git config core.worktree ../../..
 
 	# make a default "exclude-all" exclude file
@@ -236,8 +235,7 @@ clone_one() {
 		return
 	}
 	git branch --track master origin/master
-	local branch="ver-$ver"; [ "$ver" ] || branch=master
-	git checkout -B "$branch" $ver
+	git checkout $ver
 
 	# if fetch was successful, (re)register the repo's origin
 	if [ "$origin" != "$rorigin" ]; then
@@ -402,13 +400,12 @@ remove_release() {
 	rm ".mgit/$1.release"
 }
 
-checkout_release() {
-	local repo="$1"
-	[ -f ".mgit/$repo.release" ] || usage "Unknown release '$repo'."
-	cat ".mgit/$repo.release" | (IFS=" "; while read repo ver; do
-		[ -d ".mgit/$repo/.git" ] || "$0" clone "$repo"
-		local branch="ver-$ver"; [ "$ver" ] || branch=master
-		"$0" "$repo" checkout -B "$branch" $ver
+clone_release() {
+	local rel="$1"
+	[ -f "$rel" ] || rel=".mgit/$rel.release"
+	[ -f "$rel" ] || usage "Release not found: '$1'."
+	cat "$rel" | (IFS=" "; while read repo ver; do
+		"$0" clone "$repo=$ver"
 	done)
 }
 
@@ -422,7 +419,7 @@ release() {
 	case "$cmd" in
 		"")       show_release "$rel" "$@" ;;
 		update)   update_release "$rel" "$@" ;;
-		checkout) checkout_release "$rel" "$@" ;;
+		clone)    clone_release "$rel" "$@" ;;
 		remove)   remove_release "$rel" "$@" ;;
 		*)        usage "Invalid release command '$cmd'."
 	esac
@@ -454,9 +451,9 @@ git_ver() {
 git_version() {
 	printf "%-20s" "$MULTIGIT_REPO"
 	if [ "$1" = "tag" ]; then
-		git describe --tags --abbrev=0
+		git describe --tags --abbrev=0 || echo ""
 	else
-		git describe --tags --long --always
+		git describe --tags --long --always || echo ""
 	fi
 }
 
@@ -551,6 +548,7 @@ case "$cmd" in
 	init)         init "$@" ;;
 	clone)        clone "$@" ;;
 	clone-all)    clone_all "$@" ;;
+	clone-release) clone_release "$@" ;;
 	remove)       remove "$@" ;;
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;

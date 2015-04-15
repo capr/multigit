@@ -142,9 +142,14 @@ This creates (or updates) a list with currently checked out versions
 of all repos, effectively recording a snapshot of the entire project.
 This snapshot can later be restored with:
 
-	$ mgit release 1.0 checkout
+	$ mgit clone-release 1.0
 
-> Needless to say, you can add the .release file to your meta repo too,
+> Note: Existing repos will have to be removed first. This command
+will refuse to overwrite them. Also, this will not create branches.
+Your repos will be in "detached HEAD state". You can take it from there
+with git, eg. with `mgit --all checkout -b release-1.0`.
+
+Needless to say, you can add the .release file to your meta repo too,
 just like with the .baseurl and .origin files before, so that other people
 will be able to clone the project at that specific release point.
 
@@ -154,7 +159,7 @@ files is with:
 	$ mgit --all ver
 	foo=701d080 bar=0fefd96
 
-And later clone/checkout the repos with:
+And later clone the repos with:
 
 	$ mgit clone foo=701d080 bar=0fefd96
 
@@ -241,6 +246,14 @@ The way they work is very simple:
 
 Look at [luapower-repos](https://github.com/luapower/luapower-repos)
 for a real-world example of this.
+
+## Environment
+
+Multigit will use the following environment variables when performing
+various tasks:
+
+  * `$MULTIGIT_FETCH_OPTS` will be expanded and passed to `git fetch`
+  * `$MULTIGIT_INIT_OPTS` will be expanded and passed to `git init`
 
 ## Limitations
 
