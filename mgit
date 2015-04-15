@@ -152,10 +152,10 @@ init() {
 	mkdir -p ".mgit/$name"
 	export GIT_DIR=".mgit/$name/.git"
 	git init "$@"
-	git config --local core.worktree ../../..
+	git config core.worktree ../../..
 
 	# make a default "exclude-all" exclude file
-	git config --local core.excludesfile ".mgit/$name.exclude"
+	git config core.excludesfile ".mgit/$name.exclude"
 	[ -f ".mgit/$name.exclude" ] || echo '*' > ".mgit/$name.exclude"
 
 	return 0
