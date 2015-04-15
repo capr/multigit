@@ -25,7 +25,7 @@ usage() {
 	echo "   ls-double-tracked            list files tracked by multiple repos"
 	echo
 	echo "   init REPO [git-init-options...]        create a local repo"
-	echo "   clone [REMOTE/]REPO|URL[=version] ...  clone one ore more repos"
+	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
 	echo "   clone-all [git-fetch-options]          clone all known uncloned repos"
 	echo "   remove [--dry] REPO ...                remove repos from disk (!)"
 	echo
