@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.0 - git wrapper for working with overlaid repos."
+	echo " multigit 3.1 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -33,12 +33,12 @@ usage() {
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
 	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
 	echo
-	echo "   REPO1,...                       start a shell for using git on a repo"
-	echo "   REPO1,...|--all command ...     execute any git command on a repo"
-	echo "   REPO1,...|--all exec ...        execute a shell command in a repo context"
-	echo "   REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
-	echo "   REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
-	echo "   REPO1,...|--all make-hardlinks  make hard links in .mgit/REPO"
+	echo "   [-] REPO1,...                       start a shell for using git on a repo"
+	echo "   [-] REPO1,...|--all command ...     execute any git command on a repo"
+	echo "   [-] REPO1,...|--all exec ...        execute a shell command in a repo context"
+	echo "   [-] REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
+	echo "   [-] REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
+	echo "   [-] REPO1,...|--all make-hardlinks  make hard links in .mgit/REPO"
 	echo
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update [tag]     create/update a release based on HEADs"
@@ -553,6 +553,7 @@ case "$cmd" in
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
+	-)            git_cmd "$@" ;;
 	*)
 		# look for and execute a plugin command
 		if [ -f ".mgit/$cmd.sh" ]; then
