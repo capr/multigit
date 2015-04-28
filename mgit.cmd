@@ -10,7 +10,8 @@ rem for this to work git.exe must be in PATH and bash.exe must be in ../bin.
 	set "dir=%~$PATH:1"
 	goto end
 :git_found
-	set PATH=/bin
+	rem set PATH so that local binaries take priority over MSYS ones.
+	set PATH=/bin;%PATH%
 	"%dir:~0,-12%\bin\bash.exe" "%~dp0mgit" %*
 	goto end
 :git_not_found
