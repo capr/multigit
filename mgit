@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.2 - git wrapper for working with overlaid repos."
+	echo " multigit 3.3 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -105,15 +105,22 @@ tracked_files() {
 }
 
 existing_files() {
-	find * -type f | sort | uniq
+	find * -type f | grep -v "^$1$" | sort
 }
 
 list_untracked() {
 	check_root
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files)
 	tracked_files > $$.tmp
-	# NOTE: grep may be slow but there's no comm on Git for Windows
-	existing_files | grep -v ^$$.tmp$ | grep -v -F -w -f $$.tmp
+	if [ "$OSTYPE" != "msys" ]; then
+		# NOTE: not using grep because it's buggy on OSX (doesn't match all).
+		existing_files $$.tmp | comm -23 - $$.tmp
+	else
+		# NOTE: using grep because Git for Windows doesn't have comm,
+		# and because if MSYS is in PATH, comm from MSYS can't be used with
+		# Git's bash (it crashes).
+		existing_files $$.tmp | grep -v -F -x -f $$.tmp
+	fi
 	rm $$.tmp
 }
 
