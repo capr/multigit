@@ -256,10 +256,11 @@ clone_one() {
 	# (re)register the repo's origin.
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
-			echo "NOTE:  Updating origin for '$name': '$origin' (was '$rorigin')"
+			echo "NOTE:  Updating origin for '$name': $origin"
+			echo " was:  $rorigin"
 		else
-			echo "NOTE:  Adding origin for '$name': '$origin'"
-			echo "                             url: '$url'"
+			echo "NOTE:  Adding origin for '$name': $origin"
+			echo " url:  $url"
 		fi
 		mkdir -p .mgit
 		echo "$origin" > ".mgit/$name.origin"
