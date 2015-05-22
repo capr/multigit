@@ -160,11 +160,17 @@ init() {
 	git init $MULTIGIT_INIT_OPTS
 	git config core.worktree ../../..
 
-	# make a default "exclude-all" exclude file
 	git config core.excludesfile ".mgit/$name.exclude"
-	[ -f ".mgit/$name.exclude" ] || echo '*' > ".mgit/$name.exclude"
+	make_exclude_file "$name"
 
 	return 0
+}
+
+make_exclude_file() {
+	[ "$no_exclude_file" ] && return
+	[ -f ".mgit/$1.exclude" ] && return
+	# make a default "exclude-all" exclude file
+	echo '*' > ".mgit/$1.exclude"
 }
 
 clone_one() {
@@ -233,7 +239,7 @@ clone_one() {
 	fi
 
 	# finally, clone the repo
-	init "$name" || return
+	no_exclude_file=1 init "$name" || return
 	git remote add origin "$url"
 	git fetch $MULTIGIT_FETCH_OPTS || {
 		rm -rf ".mgit/$name/"
@@ -244,7 +250,10 @@ clone_one() {
 	git branch --track master origin/master
 	git checkout $ver
 
-	# if fetch was successful, (re)register the repo's origin
+	# make an exclude file if one wasn't checked out already.
+	make_exclude_file "$name"
+
+	# (re)register the repo's origin.
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
 			echo "NOTE:  Updating origin for '$name': '$origin' (was '$rorigin')"
