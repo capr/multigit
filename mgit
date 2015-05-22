@@ -258,7 +258,8 @@ clone_one() {
 		if [ "$rorigin" ]; then
 			echo "NOTE:  Updating origin for '$name': '$origin' (was '$rorigin')"
 		else
-			echo "NOTE:  Adding origin for '$name': '$origin' (url: '$url')"
+			echo "NOTE:  Adding origin for '$name': '$origin'"
+			echo "                             url: '$url'"
 		fi
 		mkdir -p .mgit
 		echo "$origin" > ".mgit/$name.origin"
