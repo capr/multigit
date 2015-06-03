@@ -87,6 +87,12 @@ Or you can type git commands directly without a subshell:
 	$ mgit foo ls-files
 	foo.txt
 
+Or you can ditch multigit entirely and go bare git:
+
+   $ export GIT_DIR=.mgit/foo/.git
+   $ git ls-files
+   foo.txt
+
 ## How do I clone repositories?
 
 	$ mkdir project
