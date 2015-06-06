@@ -1,7 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 rem find bash.exe from a git installation and run our git wrapper with it.
-rem for this to work git.exe must be in PATH and bash.exe must be in ../bin.
+rem for this to work git.exe must be in PATH and bash.exe must be 
+rem in ../bin (MSysGit) or ../usr/bin (Git for Windows).
 :begin
 	call :set_dir git.exe
 	if exist !dir! goto git_found
@@ -11,8 +12,10 @@ rem for this to work git.exe must be in PATH and bash.exe must be in ../bin.
 	goto end
 :git_found
 	rem set PATH so that local binaries take priority over MSYS ones.
-	set PATH=/bin;%PATH%
-	"%dir:~0,-12%\bin\bash.exe" "%~dp0mgit" %*
+	set "PATH=/bin;%PATH%"
+	set "BASH=%dir:~0,-12%\bin\bash.exe"
+	if not exist "%BASH%" set "BASH=%dir:~0,-12%\usr\bin\bash.exe"
+	"%BASH%" "%~dp0mgit" %*
 	goto end
 :git_not_found
 	echo git.exe not found in PATH
