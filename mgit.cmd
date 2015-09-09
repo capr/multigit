@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
-rem find bash.exe from a git installation and run our git wrapper with it.
-rem for this to work git.exe must be in PATH and bash.exe must be 
-rem in ../bin (MSysGit) or ../usr/bin (Git for Windows).
+REM # Find bash.exe from a git installation and run our git wrapper with it.
+REM # For this to work git.exe must be in PATH and bash.exe must be
+REM # in ../bin (MSysGit) or ../usr/bin (Git for Windows).
 :begin
 	call :set_dir git.exe
 	if exist !dir! goto git_found
