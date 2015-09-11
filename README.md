@@ -242,8 +242,10 @@ Plugin scripts can be included say, in the meta package of your project.
 The way they work is very simple:
 
   * `mgit <repo> <command> ...` will try to run
-    `.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly
-    and `$MULTIGIT_REPO` set to `<repo>`.
+    `.mgit/git-<command>.sh ...` with `$GIT_DIR` set properly,
+	 `$MULTIGIT_REPO` set to `<repo>`, `$PWD0` set to the
+	 invocation path and current directory set to one directory where
+	 the `.mgit` directory was found.
 
   * `mgit <command> ...` will try to run `.mgit/<command>.sh`.
 
