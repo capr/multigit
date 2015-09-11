@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.5 - git wrapper for working with overlaid repos."
+	echo " multigit 3.6 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -19,10 +19,11 @@ usage() {
 	echo "   ls-all                       list all known repos"
 	echo "   ls-uncloned                  list all known but not cloned repos"
 	echo
-	echo "   ls-modified|st               list modified files across all repos"
+	echo "   ls-modified|st[atus]         list modified files across all repos"
 	echo "   ls-unpushed                  list repos that are ahead of origin"
 	echo "   ls-untracked                 list files untracked by any repo"
 	echo "   ls-double-tracked            list files tracked by multiple repos"
+	echo "   ls-tracked                   list files and which repos are tracking them"
 	echo
 	echo "   init REPO                              create a local repo"
 	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
@@ -108,6 +109,15 @@ existing_files() {
 	find * -type f | grep -v "^$1$" | sort
 }
 
+list_tracked() {
+	check_root
+	for repo in `list_cloned`; do
+		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
+			printf "%-16s %s\n" "$repo" "$f"
+		done
+	done
+}
+
 list_untracked() {
 	check_root
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files)
@@ -129,11 +139,7 @@ list_double_tracked() {
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files -d)
 	tracked_files -d > $$.tmp
 	[ "$(cat $$.tmp)" ] && \
-		for repo in `list_cloned`; do
-			GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
-				printf "%-16s %s\n" "$repo" "$f"
-			done
-		done | grep -F -w -f $$.tmp
+		list_tracked | grep -F -w -f $$.tmp
 	rm $$.tmp
 }
 
@@ -560,9 +566,11 @@ case "$cmd" in
 	ls-uncloned)  list_uncloned ;;
 	ls-modified)  list_modified ;;
 	st)           list_modified ;;
+	status)       list_modified ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
+	ls-tracked)   list_tracked ;;
 	init)         init "$@" ;;
 	clone)        clone "$@" ;;
 	clone-all)    clone_all "$@" ;;
