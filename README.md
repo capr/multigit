@@ -202,7 +202,7 @@ This is such basic and useful functionality that it should
 be built into `git clone` and `git init` really. As dead simple
 as multigit is, it's still yet another script that you have to deploy.
 
-## Simple? But it's a 500 lines script!
+## Simple? But it's a 600 lines script!
 
 Don't worry about it, it's mostly fluff. The gist of it is only 6 lines:
 
