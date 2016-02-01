@@ -138,7 +138,8 @@ This makes for a simple way to manage and share module collections
 that later can be cloned back wholesale.
 
 Note that repos created with `mgit init foo` don't create an origin file.
-You can add that yourself with `mgit origin foo <url>`.
+You can add that yourself with `mgit origin foo https://github.com/bob/foo`
+or simply `mgit origin foo bob` if you have previously added bob's baseurl.
 
 ## But this will always clone master. How do I lock versions?
 
