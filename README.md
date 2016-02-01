@@ -106,6 +106,10 @@ This will clone both repos into the current directory
 
 ## But do I have to type the full URL every time?
 
+No you don't. Since most of the submodules in a big project will probably
+reside at a common base URL, you can make an alias for that base URL and
+use that instead when cloning the submodules:
+
 	$ mgit baseurl bob https://github.com/bob/  # writes `https://github.com/bob/` in .mgit/bob.baseurl
 	$ mgit clone bob/foo bob/bar                # writes `bob` in .mgit/foo.origin and .mgit/bar.origin
 
@@ -177,8 +181,8 @@ Tag releases can be made with:
 Tag releases only record the current tag as opposed to the exact
 full version of the packages. This allows you to make stable releases
 even when some packages are "unstable" (i.e. they contain commits above the
-latest tag). It also allows the controversial practice of updating a tag's
-target without having to make a new release.
+latest tag). It also enables the controversial practice of updating a tag's
+target commit without having to make a new release.
 
 ## What else can it do?
 
