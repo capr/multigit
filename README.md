@@ -106,8 +106,8 @@ This will clone both repos into the current directory
 
 ## But do I have to type the full URL every time?
 
-	$ mgit baseurl https://github.com/bob/  # adds .mgit/bob.baseurl
-	$ mgit clone bob/foo bob/bar            # adds .mgit/foo.origin and .mgit/bar.origin
+	$ mgit baseurl bob https://github.com/bob/  # writes `https://github.com/bob/` in .mgit/bob.baseurl
+	$ mgit clone bob/foo bob/bar                # writes `bob` in .mgit/foo.origin and .mgit/bar.origin
 
 Now that bob is _registered_ as a remote, and both foo's and bar's origins
 are registered too (they are set to `bob`), next time it will be enough
