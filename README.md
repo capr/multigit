@@ -188,8 +188,10 @@ target commit without having to make a new release.
 
 command                               | description
 ------------------------------------- | --------------------------------------
-`mgit ls-modified`                    | list modified files across all repos
+`mgit st`                             | list modified files across all repos
+`mgit --all -v status -s`             | like `mgit st` but shows the repos too
 `mgit ls-unpushed`                    | list repos ahead of origin
+`mgit ls-tracked`                     | list files and the repos who track them
 `mgit ls-untracked`                   | list files untracked by any repo
 `mgit ls-double-tracked`              | list files tracked by multiple repos
 `mgit remove [--dry] REPO ...`        | remove repos from disk
