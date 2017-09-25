@@ -510,7 +510,8 @@ git_cmd_one() {
 	export MULTIGIT_REPO="$repo"
 	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
 	case "$cmd" in
-		exec)           cd "$PWD0" && "$@" ;;
+		exec)           
+		&& "$@" ;;
 		ver)            git_ver "$@" ;;
 		version)        git_version "$@" ;;
 		make-symlinks)  git_make_symlinks "$@" ;;
@@ -521,7 +522,7 @@ git_cmd_one() {
 			if [ -f ".mgit/git-$cmd.sh" ]; then
 				PWD0="$PWD0" ".mgit/git-$cmd.sh" "$@"
 			else
-				cd "$PWD0" && git "$cmd" "$@"
+				(cd "$PWD0" && git "$cmd" "$@")
 			fi
 		;;
 	esac
