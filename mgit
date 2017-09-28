@@ -510,8 +510,7 @@ git_cmd_one() {
 	export MULTIGIT_REPO="$repo"
 	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
 	case "$cmd" in
-		exec)           
-		&& "$@" ;;
+		exec)           cd "$PWD0" && "$@" ;;
 		ver)            git_ver "$@" ;;
 		version)        git_version "$@" ;;
 		make-symlinks)  git_make_symlinks "$@" ;;
