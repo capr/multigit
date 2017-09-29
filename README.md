@@ -31,6 +31,10 @@ put it somewhere in your PATH, or you can clone it everywhere
 you want to create a multigit project in, and call it as `./mgit`
 (or `mgit` on Windows).
 
+If you would also like to use the optional autocomplete script which
+lists available `mgit` and `git` commands and repos, source the `mgit-autocomplete.sh`
+script from your `.bash_profile`.
+
 ## How do I use it?
 
 Let's see a bare bones example:
