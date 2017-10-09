@@ -31,9 +31,11 @@ put it somewhere in your PATH, or you can clone it everywhere
 you want to create a multigit project in, and call it as `./mgit`
 (or `mgit` on Windows).
 
-If you would also like to use the optional autocomplete script which
-lists available `mgit` and `git` commands and repos, source the `mgit-autocomplete.sh`
-script from your `.bash_profile`.
+To enable tab completion in bash, put `mgit-autocomplete.sh` somewhere
+and source it in your `.bashrc` along with your git completion script
+(don't call them, dot them). On Ubuntu, the git completion script is at
+`/usr/share/bash-completion/completions/git` (you need to source
+that manually).
 
 ## How do I use it?
 
