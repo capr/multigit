@@ -148,7 +148,7 @@ list_double_tracked() {
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files -d)
 	tracked_files -d > $$.tmp
 	[ "$(cat $$.tmp)" ] && \
-		list_tracked | grep -F -w -f $$.tmp
+		PWD0="$PWD" list_tracked | grep -F -w -f $$.tmp
 	rm $$.tmp
 }
 
