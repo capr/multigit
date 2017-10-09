@@ -107,10 +107,17 @@ tracked_files() {
 }
 
 which_tracks() {
-	[ -z "$1" ] && echo "Please provide a filename" && return
-	local path="$(readlink -f $PWD0/$1)"
+	[ "$1" ] || usage "Filename expected."
+	local path="$PWD0/$1"
 	path="${path#$PWD/}" #get path relative to root for matching
-	list_tracked | grep "$path" | awk '{print $1}'
+	check_root
+	for repo in `list_cloned`; do
+		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
+			if [ "$f" == "$path" ]; then
+				echo "$repo"
+			fi
+		done
+	done
 }
 
 existing_files() {
