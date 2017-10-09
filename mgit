@@ -24,6 +24,7 @@ usage() {
 	echo "   ls-untracked                 list files untracked by any repo"
 	echo "   ls-double-tracked            list files tracked by multiple repos"
 	echo "   ls-tracked                   list files and which repos are tracking them"
+	echo "   which FILENAME               list which repo(s) are tracking a file"
 	echo
 	echo "   init REPO                              create a local repo"
 	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
@@ -103,6 +104,13 @@ tracked_files() {
 	for repo in `list_cloned`; do
 		GIT_DIR=".mgit/$repo/.git" git ls-files
 	done) | sort | uniq $1
+}
+
+which_tracks() {
+	[ -z "$1" ] && echo "Please provide a filename" && return
+	local path="$(readlink -f $PWD0/$1)"
+	path="${path#$PWD/}" #get path relative to root for matching
+	list_tracked | grep "$path" | awk '{print $1}'
 }
 
 existing_files() {
@@ -569,6 +577,7 @@ case "$cmd" in
 	ls-modified)  list_modified ;;
 	st)           list_modified ;;
 	status)       list_modified ;;
+	which)	      which_tracks "$@" ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
