@@ -69,7 +69,7 @@ list_known() {
 
 list_cloned() {
 	check_root
-   (cd .mgit && \
+	(cd .mgit && \
 	for f in *; do
 		[ -d "$f/.git" ] && echo "$f"
 	done)
@@ -108,15 +108,8 @@ tracked_files() {
 
 which_tracks() {
 	[ "$1" ] || usage "Filename expected."
-	local path="$PWD0/$1"
-	path="${path#$PWD/}" #get path relative to root for matching
-	check_root
-	for repo in `list_cloned`; do
-		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
-			if [ "$f" == "$path" ]; then
-				echo "$repo"
-			fi
-		done
+	list_tracked | while IFS=" " read repo file; do
+		[ "$file" == "$1" ] && echo "$repo"
 	done
 }
 
@@ -126,8 +119,9 @@ existing_files() {
 
 list_tracked() {
 	check_root
+	local MGIT_DIR="$PWD"
 	for repo in `list_cloned`; do
-		GIT_DIR=".mgit/$repo/.git" git ls-files | while read f; do
+		(cd "$PWD0"; GIT_DIR="$MGIT_DIR/.mgit/$repo/.git" git ls-files) | while read f; do
 			printf "%-16s %s\n" "$repo" "$f"
 		done
 	done
