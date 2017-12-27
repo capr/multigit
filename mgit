@@ -160,9 +160,9 @@ clone_all() {
 
 init() {
 	local name="$1"
-	name="${name//[^-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]/}"
+	name="${name//[^.-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]/}"
 	[ "$name" = "$1" ] || \
-		usage "Invalid name: '$1'. Only letters, numbers, '-' and '_' allowed."
+		usage "Invalid name: '$1'. Only letters, numbers, '.', '-' and '_' allowed."
 
 	# check that the repo is not already cloned
 	[ -d ".mgit/$name" ] && {
