@@ -4,25 +4,25 @@
 <sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub><br>
 <sub>Tested on **Linux**, **Windows** and **OSX**</sub>
 
-Multigit allows you to check out multiple git repositories over a
-common directory and provides simple tools that let you continue
-to use git as before, without multigit getting in your way.
+Multigit allows checking out multiple git repositories overlaid 
+onto the same directory.
 
 It is useful for projects which are made of different components
-that are developed separately, but which need to deploy files
-in different parts of the directory structure of the project.
+that are developed separately, but which need to track files 
+from different parts of the directory structure of the project.
 
 This cannot be done using git submodules or git subtrees, which
-only allow subprojects to deploy files in their own subdirectory.
-Multigit allows subprojects to deploy files in any directory of the
-project, similar to a union filesystem, where each repository is a layer.
+only allow subprojects to be checked out into their own private 
+subdirectories. Multigit allows repositories to track any file 
+from any directory of the project structure, similar to a union 
+filesystem, where each repository is a layer.
 
 Some examples where this combination of change management
 and module management could be useful:
 
   * manage customizations made to a web app in a separate repository.
-  * putting your home directory under source control.
-  * package and/or config manager for a Linux distro.
+  * putting your home directory under source control, one repo per app.
+  * package manager for a project, dev platform or language.
 
 ## How do I install it?
 
