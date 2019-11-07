@@ -86,7 +86,7 @@ list_uncloned() {
 
 list_modified() {
 	check_root
-	"$0" --all status -s
+	"$0" --all "$@" status -s
 }
 
 list_unpushed() {
@@ -575,9 +575,9 @@ case "$cmd" in
 	ls)           list_cloned ;;
 	ls-all)       list_known ;;
 	ls-uncloned)  list_uncloned ;;
-	ls-modified)  list_modified ;;
-	st)           list_modified ;;
-	status)       list_modified ;;
+	ls-modified)  list_modified "$@" ;;
+	st)           list_modified "$@" ;;
+	status)       list_modified "$@" ;;
 	which)	      which_tracks "$@" ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
