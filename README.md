@@ -1,6 +1,6 @@
 # multigit
 
-#### layered git repositories
+## layered git repositories
 <sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub><br>
 <sub>Tested on **Linux**, **Windows** and **OSX**</sub>
 
