@@ -1,8 +1,6 @@
 # multigit
 
-## layered git repositories
-<sub>Writen by Cosmin Apreutesei. **Public Domain**.</sub><br>
-<sub>Tested on **Linux**, **Windows** and **OSX**</sub>
+## Layered Git Repositories | **Linux**, **Windows**, **Mac**
 
 Multigit allows checking out multiple git repositories overlaid 
 onto the same directory.
