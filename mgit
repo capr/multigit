@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.8 - git wrapper for working with overlaid repos."
+	echo " multigit 3.8.1 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -31,6 +31,7 @@ usage() {
 	echo "   clone-all                              clone all known uncloned repos"
 	echo "   clone-release REL|RELFILE              clone/checkout all repos from a release (file)"
 	echo "   remove [--yes] [--dry] REPO ...        remove repos from disk (!)"
+	echo "   convert [NAME]                         convert current git repo to mgit"
 	echo
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
 	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
@@ -109,7 +110,7 @@ tracked_files() {
 which_tracks() {
 	[ "$1" ] || usage "Filename expected."
 	list_tracked | while IFS=" " read repo file; do
-		[ "$file" == "$1" ] && echo "$repo"
+		[ "$file" = "$1" ] && echo "$repo"
 	done
 }
 
@@ -162,11 +163,17 @@ clone_all() {
 	done
 }
 
-init() {
+check_repo_name() {
+	[ "$1" ] || usage "Repo name expected."
 	local name="$1"
 	name="${name//[^\.\-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]/}"
 	[ "$name" = "$1" ] || \
 		usage "Invalid name: '$1'. Only letters, numbers, '.', '-' and '_' allowed."
+}
+
+init() {
+	check_repo_name "$1"
+	local name="$1"
 
 	# check that the repo is not already cloned
 	[ -d ".mgit/$name" ] && {
@@ -225,7 +232,7 @@ clone_one() {
 
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
-		[ "$ver" == "$ver0" ] && return
+		[ "$ver" = "$ver0" ] && return
 		[ "$ver" ] || ver=master
 		echo "PULL: $name $ver (was: $ver0)"
 		export GIT_DIR=".mgit/$name/.git"
@@ -333,7 +340,7 @@ remove_one() {
 	}
 
 	# ask for confirmation if there are files to delete
-	[ "$files" -a "$YES" == "" ] && {
+	[ "$files" -a "$YES" = "" ] && {
 		local n=$(echo "$files" | wc -l)
 		echo "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
 		read yes
@@ -371,6 +378,20 @@ remove() {
 	   	shift
 	   done
 	fi
+}
+
+convert() {
+	local name="$1"
+	[ "$name" ] || name="$(basename "$PWD")"
+	check_repo_name "$name"
+	[ -d "$PWD0/.git" ] || usage "No .git dir in current dir"
+	[ -d ".mgit/$name" ] && usage "Repo already exists: $name."
+	mkdir -p ".mgit/$name"
+	mv "$PWD0/.git" ".mgit/$name/.git"
+	export GIT_DIR=".mgit/$name/.git"
+	git config core.worktree ../../..
+	git config core.excludesfile ".mgit/$name.exclude"
+	make_exclude_file "$name"
 }
 
 baseurl() {
@@ -450,7 +471,7 @@ update_release() {
 		echo "$s" | (IFS=" "; while read repo ver0; do
 			local name="${repo##*/}"
 			local ver="$(git_ver_for "$name" $2)"
-			[ "$ver0" == "*" ] && ver="*" # not touching those
+			[ "$ver0" = "*" ] && ver="*" # not touching those
 			printf "%-20s %s\n" "$repo" "$ver"
 			[ "$ver" != "$ver0" ] && printf "%-20s %s -> %s\n" "$repo" "$ver0" "$ver" >&2
 		done) > "$rel"
@@ -594,7 +615,7 @@ git_cmd() {
 	local repos="$1"; shift
 	if [ "$repos" = "--all" ]; then
 		[ "$1" ] || usage "Refusing to start a subshell for each repo."
-		[ "$1" == "-v" ] && { VERBOSE=1; shift; }
+		[ "$1" = "-v" ] && { VERBOSE=1; shift; }
 		for repo in `list_cloned`; do
 			git_cmd_one "$repo" "$@"
 		done
@@ -640,6 +661,7 @@ case "$cmd" in
 	clone-all)    clone_all "$@" ;;
 	clone-release) clone_release "$@" ;;
 	remove)       remove "$@" ;;
+	convert)      convert "$@" ;;
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
