@@ -10,7 +10,7 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.6.1 - git wrapper for working with overlaid repos."
+	echo " multigit 3.7.0 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
 	echo " USAGE: mgit ..."
@@ -29,8 +29,8 @@ usage() {
 	echo "   init REPO                              create a local repo"
 	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
 	echo "   clone-all                              clone all known uncloned repos"
-	echo "   clone-release REL|RELFILE              clone all repos from a release file"
-	echo "   remove [--dry] REPO ...                remove repos from disk (!)"
+	echo "   clone-release REL|RELFILE              clone/checkout all repos from a release (file)"
+	echo "   remove [--yes] [--dry] REPO ...        remove repos from disk (!)"
 	echo
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
 	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
@@ -44,7 +44,7 @@ usage() {
 	echo
 	echo "   release [REL]                show a release or list releases"
 	echo "   release REL update [tag]     create/update a release based on HEADs"
-	echo "   release REL clone            clone all repos from a release"
+	echo "   release REL clone            clone/checkout all repos from a release"
 	echo "   release REL remove           remove a release file"
 	echo
 	echo "   [help|--help]                show this screen"
@@ -127,20 +127,24 @@ list_tracked() {
 	done
 }
 
-list_untracked() {
-	check_root
+list_sub() { # list_sub A B removes from list A the lines found in list B.
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files)
-	tracked_files > $$.tmp
+	"$2" > $$.tmp
 	if [ "$OSTYPE" != "msys" ]; then
 		# NOTE: not using grep because it's buggy on OSX (doesn't match all).
-		existing_files $$.tmp | comm -23 - $$.tmp
+		"$1" $$.tmp | comm -23 - $$.tmp
 	else
 		# NOTE: using grep because Git for Windows doesn't have comm,
 		# and because if MSYS is in PATH, comm from MSYS can't be used with
 		# Git's bash (it crashes).
-		existing_files $$.tmp | grep -v -F -x -f $$.tmp
+		"$1" $$.tmp | grep -v -F -x -f $$.tmp
 	fi
 	rm $$.tmp
+}
+
+list_untracked() {
+	check_root
+	list_sub existing_files tracked_files
 }
 
 list_double_tracked() {
@@ -219,6 +223,18 @@ clone_one() {
 	# check that arg is not `/` or `origin/`
 	[ "$name" ] || usage "Invalid repo name '$1'."
 
+	[ -d ".mgit/$name" ] && {
+		local ver0="$(git_ver_for "$name")"
+		[ "$ver" == "$ver0" ] && return
+		[ "$ver" ] || ver=master
+		echo "PULL: $name $ver (was: $ver0)"
+		export GIT_DIR=".mgit/$name/.git"
+		git fetch $MULTIGIT_FETCH_OPTS
+		git -c advice.detachedHead=false checkout "$tag"
+		export GIT_DIR=
+		return 0
+	}
+
 	# check for a registered origin
 	[ -f ".mgit/$name.origin" ] && \
 		rorigin=$(cat .mgit/$name.origin)
@@ -263,7 +279,7 @@ clone_one() {
 		return
 	}
 	git branch --track master origin/master
-	git checkout $ver
+	git -c advice.detachedHead=false checkout $ver
 
 	# make an exclude file if one wasn't checked out already.
 	make_exclude_file "$name"
@@ -317,7 +333,7 @@ remove_one() {
 	}
 
 	# ask for confirmation if there are files to delete
-	[ "$files" ] && {
+	[ "$files" -a "$YES" == "" ] && {
 		local n=$(echo "$files" | wc -l)
 		echo "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
 		read yes
@@ -345,6 +361,7 @@ remove_one() {
 
 remove() {
 	[ "$1" = "--dry" ] && { DRY_RUN=1; shift; }
+	[ "$1" = "--yes" ] && { YES=1; shift; }
 	[ "$1" ] || usage "Repo name expected."
 	if [ $# = 1 ]; then
 		remove_one "$@"
@@ -426,19 +443,54 @@ show_release() {
 }
 
 update_release() {
-	"$0" --all version $2 > ".mgit/$1.release"
+	local rel="$1"
+	[ -f "$rel" ] || rel=".mgit/$rel.release"
+	if [ -f "$rel" ]; then
+		local s="$(cat "$rel")"
+		echo "$s" | (IFS=" "; while read repo ver0; do
+			local name="${repo##*/}"
+			local ver="$(git_ver_for "$name" $2)"
+			[ "$ver0" == "*" ] && ver="*" # not touching those
+			printf "%-20s %s\n" "$repo" "$ver"
+			[ "$ver" != "$ver0" ] && printf "%-20s %s -> %s\n" "$repo" "$ver0" "$ver" >&2
+		done) > "$rel"
+	else
+		"$0" --all version $2 > "$rel"
+	fi
 }
 
 remove_release() {
 	rm ".mgit/$1.release"
 }
 
+list_release_repos() {
+	cat "$RELEASE" | (IFS=" "; while read repo ver; do
+		local name="${repo##*/}"
+		echo "$name"
+	done)
+}
+
 clone_release() {
 	local rel="$1"
 	[ -f "$rel" ] || rel=".mgit/$rel.release"
 	[ -f "$rel" ] || usage "Release not found: '$1'."
-	cat "$rel" | (IFS=" "; while read repo ver; do
-		"$0" clone "$repo=$ver"
+
+	local s="$(cat "$rel")" # load it in memory to make sure we have it till the end.
+
+	# step 1: remove any repos that are not part of the release.
+	RELEASE="$rel" list_sub list_cloned list_release_repos | while read repo; do
+		"$0" remove --yes "$repo"
+	done
+
+	# step 2: clone/checkout repos present in the release.
+	echo "$s" | (IFS=" "; while read repo ver; do
+		# Version "*" in a release file specifies that the repo is already cloned
+		# and checked out: this is the repo that contains the release file itself.
+		# Even if cloned manually beforehand, the repo that contains the release file
+		# must still be listed in the release file to avoid removing it in step 1.
+		if [ "$ver" != "*" ]; then
+			"$0" clone "$repo=$ver"
+		fi
 	done)
 }
 
@@ -473,21 +525,21 @@ git_shell() {
 	fi
 }
 
-git_ver() {
-	if [ "$1" = "tag" ]; then
-		printf "$MULTIGIT_REPO=$(git describe --tags --abbrev=0) "
+git_ver_for() {
+	if [ "$2" = "tag" ]; then
+		GIT_DIR=".mgit/$1/.git" git describe --tags --abbrev=0 2>/dev/null
 	else
-		printf "$MULTIGIT_REPO=$(git describe --tags --long --always) "
+		GIT_DIR=".mgit/$1/.git" git describe --tags --long --always
 	fi
 }
 
+git_ver() {
+	printf "$MULTIGIT_REPO=$(git_ver_for "$MULTIGIT_REPO" $1) "
+}
+
 git_version() {
-	printf "%-20s" "$MULTIGIT_REPO"
-	if [ "$1" = "tag" ]; then
-		git describe --tags --abbrev=0 || echo ""
-	else
-		git describe --tags --long --always || echo ""
-	fi
+	printf "%-20s %s" "$MULTIGIT_REPO"
+	git_ver_for "$MULTIGIT_REPO" $1
 }
 
 git_remove_links() {
