@@ -10,10 +10,10 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.8.1 - git wrapper for working with overlaid repos."
+	echo " multigit 3.8.2 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
-	echo " USAGE: mgit ..."
+	echo " USAGE: mgit [-v] ..."
 	echo
 	echo "   ls                           list cloned repos"
 	echo "   ls-all                       list all known repos"
@@ -615,7 +615,6 @@ git_cmd() {
 	local repos="$1"; shift
 	if [ "$repos" = "--all" ]; then
 		[ "$1" ] || usage "Refusing to start a subshell for each repo."
-		[ "$1" = "-v" ] && { VERBOSE=1; shift; }
 		for repo in `list_cloned`; do
 			git_cmd_one "$repo" "$@"
 		done
@@ -640,6 +639,7 @@ cd_root() {
 PWD0="$PWD"
 cd_root
 
+[ "$1" = "-v" ] && { VERBOSE=1; shift; }
 cmd="$1"; shift
 case "$cmd" in
 	"")           usage ;;
