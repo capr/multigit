@@ -227,6 +227,8 @@ clone_one() {
 		[ "$origin" = "$arg" ] && origin=""
 	fi
 
+	[ "$VERBOSE" ] && echo "@$name:"
+
 	# check that arg is not `/` or `origin/`
 	[ "$name" ] || usage "Invalid repo name '$1'."
 
