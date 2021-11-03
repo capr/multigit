@@ -239,7 +239,7 @@ clone_one() {
 		echo "PULL: $name $ver (was: $ver0)"
 		export GIT_DIR=".mgit/$name/.git"
 		git fetch $MULTIGIT_FETCH_OPTS
-		git -c advice.detachedHead=false checkout "$tag"
+		git -c advice.detachedHead=false checkout "$ver"
 		export GIT_DIR=
 		return 0
 	}
