@@ -10,10 +10,13 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.8.2 - git wrapper for working with overlaid repos."
+	echo " multigit 3.8.3 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
-	echo " USAGE: mgit [-v] ..."
+	echo " USAGE: mgit [-v] [-SS] ..."
+	echo
+	echo "   -v                           verbose"
+	echo "   -SS                          reuse SSH connections (Linux only)"
 	echo
 	echo "   ls                           list cloned repos"
 	echo "   ls-all                       list all known repos"
@@ -130,7 +133,7 @@ list_tracked() {
 
 list_sub() { # list_sub A B removes from list A the lines found in list B.
 	# NOTE: using a temp file because bash on Windows can't do <(tracked_files)
-	"$2" > $$.tmp
+	"$2" | sort > $$.tmp
 	if [ "$OSTYPE" != "msys" ]; then
 		# NOTE: not using grep because it's buggy on OSX (doesn't match all).
 		"$1" $$.tmp | comm -23 - $$.tmp
@@ -641,7 +644,16 @@ cd_root() {
 PWD0="$PWD"
 cd_root
 
-[ "$1" = "-v" ] && { export VERBOSE=1; shift; }
+while 1; do
+	case "$1" in
+		-v) export VERBOSE=1; shift ;;
+		-SS)
+			export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"
+			shift
+		;;
+		*) break ;;
+	esac
+done
 cmd="$1"; shift
 case "$cmd" in
 	"")           usage ;;
