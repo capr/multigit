@@ -644,7 +644,7 @@ cd_root() {
 PWD0="$PWD"
 cd_root
 
-while 1; do
+while true; do
 	case "$1" in
 		-v) export VERBOSE=1; shift ;;
 		-SS)
