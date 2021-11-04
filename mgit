@@ -239,12 +239,17 @@ clone_one() {
 
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
-		[ "$ver" ] || ver="$(git_ver_for "$name" long origin/master)"
-		[ "$ver" = "$ver0" ] && return
+		local ver1="$ver"
+		[ "$ver1" ] || ver1="$(git_ver_for "$name" long origin/master)"
+		[ "$ver1" = "$ver0" ] && return
 		echo "PULL: $name $ver (was: $ver0)"
 		export GIT_DIR=".mgit/$name/.git"
 		git fetch $MULTIGIT_FETCH_OPTS
-		git -c advice.detachedHead=false checkout "$ver"
+		if [ "$ver" ]; then
+			git -c advice.detachedHead=false checkout "$ver"
+		else
+			git checkout -B master origin/master
+		fi
 		export GIT_DIR=
 		return 0
 	}
