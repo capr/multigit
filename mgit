@@ -10,13 +10,15 @@ usage() {
 		exit
 	}
 	echo
-	echo " multigit 3.8.3 - git wrapper for working with overlaid repos."
+	echo " multigit 3.9.0 - git wrapper for working with overlaid repos."
 	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	echo
-	echo " USAGE: mgit [-v] [-SS] ..."
+	echo " USAGE: mgit [OPTIONS...] COMMAND..."
 	echo
 	echo "   -v                           verbose"
 	echo "   -SS                          reuse SSH connections (Linux only)"
+	echo "   --dry                        don't actually remove stuff"
+	echo "   --yes                        choose yes when asked to remove stuff"
 	echo
 	echo "   ls                           list cloned repos"
 	echo "   ls-all                       list all known repos"
@@ -33,7 +35,7 @@ usage() {
 	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
 	echo "   clone-all                              clone all known uncloned repos"
 	echo "   clone-release REL|RELFILE              clone/checkout all repos from a release (file)"
-	echo "   remove [--yes] [--dry] REPO ...        remove repos from disk (!)"
+	echo "   remove REPO ...                        remove repos from disk (!)"
 	echo "   convert [NAME]                         convert current git repo to mgit"
 	echo
 	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
@@ -372,8 +374,6 @@ remove_one() {
 }
 
 remove() {
-	[ "$1" = "--dry" ] && { DRY_RUN=1; shift; }
-	[ "$1" = "--yes" ] && { YES=1; shift; }
 	[ "$1" ] || usage "Repo name expected."
 	if [ $# = 1 ]; then
 		remove_one "$@"
@@ -505,7 +505,7 @@ clone_release() {
 
 	# step 1: remove any repos that are not part of the release.
 	RELEASE="$rel" list_sub list_cloned list_release_repos | while read repo; do
-		"$0" remove --yes "$repo"
+		"$0" --yes remove "$repo"
 	done
 
 	# step 2: clone/checkout repos present in the release.
@@ -646,12 +646,11 @@ cd_root
 
 while true; do
 	case "$1" in
-		-v) export VERBOSE=1; shift ;;
-		-SS)
-			export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"
-			shift
-		;;
-		*) break ;;
+		-v)    export VERBOSE=1; shift ;;
+		--dry) export DRY_RUN=1; shift ;;
+		--yes) export YES=1; shift ;;
+		-SS)   export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
+		*)     break ;;
 	esac
 done
 cmd="$1"; shift
