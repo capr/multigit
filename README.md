@@ -29,6 +29,13 @@ put it somewhere in your PATH, or you can clone it everywhere
 you want to create a multigit project in, and call it as `./mgit`
 (or `mgit` on Windows).
 
+### Quick install on Linux
+
+	sudo wget -O /usr/local/bin/mgit https://raw.githubusercontent.com/capr/mgit/master/mgit
+	sudo chmod a+x /usr/local/bin/mgit
+
+### Tab completion in Bash
+
 To enable tab completion in bash, put `mgit-autocomplete.sh` somewhere
 and source it in your `.bashrc` along with your git completion script
 (don't call them, dot them). On Ubuntu, the git completion script is at
