@@ -239,8 +239,8 @@ clone_one() {
 
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
+		[ "$ver" ] || ver="$(git_ver_for "$name" long origin/master)"
 		[ "$ver" = "$ver0" ] && return
-		[ "$ver" ] || ver=master
 		echo "PULL: $name $ver (was: $ver0)"
 		export GIT_DIR=".mgit/$name/.git"
 		git fetch $MULTIGIT_FETCH_OPTS
@@ -498,7 +498,7 @@ list_release_repos() {
 
 clone_release() {
 	local rel="$1"
-	[ -f "$rel" ] || rel=".mgit/$rel.release"
+	[ "${rel##*.}" = "release" -a -f "$rel" ] || rel=".mgit/$rel.release"
 	[ -f "$rel" ] || usage "Release not found: '$1'."
 
 	local s="$(cat "$rel")" # load it in memory to make sure we have it till the end.
@@ -553,9 +553,9 @@ git_shell() {
 
 git_ver_for() {
 	if [ "$2" = "tag" ]; then
-		GIT_DIR=".mgit/$1/.git" git describe --tags --abbrev=0 2>/dev/null
+		GIT_DIR=".mgit/$1/.git" git describe --tags --abbrev=0 2>/dev/null $3
 	else
-		GIT_DIR=".mgit/$1/.git" git describe --tags --long --always
+		GIT_DIR=".mgit/$1/.git" git describe --tags --long --always $3
 	fi
 }
 
