@@ -2,17 +2,17 @@
 
 ## Layered Git Repositories | **Linux**, **Windows**, **Mac**
 
-Multigit allows checking out multiple git repositories overlaid 
+Multigit allows checking out multiple git repositories overlaid
 onto the same directory.
 
 It is useful for projects which are made of different components
-that are developed separately, but which need to track files 
+that are developed separately, but which need to track files
 from different parts of the directory structure of the project.
 
 This cannot be done using git submodules or git subtrees, which
-only allow subprojects to be checked out into their own private 
-subdirectories. Multigit allows repositories to track any file 
-from any directory of the project structure, similar to a union 
+only allow subprojects to be checked out into their own private
+subdirectories. Multigit allows repositories to track any file
+from any directory of the project structure, similar to a union
 filesystem, where each repository is a layer.
 
 Some examples where this combination of change management
@@ -220,7 +220,7 @@ This is such basic and useful functionality that it should
 be built into `git clone` and `git init` really. As dead simple
 as multigit is, it's still yet another script that you have to deploy.
 
-## Simple? But it's a 600 lines script!
+## Simple? But it's a 700 lines script!
 
 Don't worry about it, it's mostly fluff. The gist of it is only 6 lines:
 

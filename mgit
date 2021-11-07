@@ -2,68 +2,73 @@
 shopt -s nullglob
 IFS=$'\n\b'
 
+# die hard, see https://github.com/capr/die
+say()   { echo "$@" >&2; }
+die()   { echo -n "EXIT: " >&2; echo "$@" >&2; exit 1; }
+debug() { [ "$DEBUG" ] && echo "$@" >&2; }
+run()   { debug -n "EXEC: $@ "; "$@"; local ret=$?; debug "[$ret]"; return $ret; }
+must()  { debug -n "MUST: $@ "; "$@"; local ret=$?; debug "[$ret]"; [ $ret == 0 ] || die "$@ [$ret]"; }
+dry()   { if [ "$DRY" ]; then say "$@"; else "$@"; fi; }
+
 usage() {
-	[ "$1" ] && {
-		echo
-		echo "ERROR: $1"
-		echo
-		exit
-	}
-	echo
-	echo " multigit 3.9.0 - git wrapper for working with overlaid repos."
-	echo " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
-	echo
-	echo " USAGE: mgit [OPTIONS...] COMMAND..."
-	echo
-	echo "   -v                           verbose"
-	echo "   -SS                          reuse SSH connections (Linux only)"
-	echo "   --dry                        don't actually remove stuff"
-	echo "   --yes                        choose yes when asked to remove stuff"
-	echo
-	echo "   ls                           list cloned repos"
-	echo "   ls-all                       list all known repos"
-	echo "   ls-uncloned                  list all known but not cloned repos"
-	echo
-	echo "   ls-modified|st[atus]         list modified files across all repos"
-	echo "   ls-unpushed                  list repos that are ahead of origin"
-	echo "   ls-untracked                 list files untracked by any repo"
-	echo "   ls-double-tracked            list files tracked by multiple repos"
-	echo "   ls-tracked                   list files and which repos are tracking them"
-	echo "   which FILENAME               list which repo(s) are tracking a file"
-	echo
-	echo "   init REPO                              create a local repo"
-	echo "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
-	echo "   clone-all                              clone all known uncloned repos"
-	echo "   clone-release REL|RELFILE              clone/checkout all repos from a release (file)"
-	echo "   remove REPO ...                        remove repos from disk (!)"
-	echo "   convert [NAME]                         convert current git repo to mgit"
-	echo
-	echo "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
-	echo "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
-	echo
-	echo "   [-] REPO1,...                       start a shell for using git on a repo"
-	echo "   [-] REPO1,...|--all command ...     execute any git command on a repo"
-	echo "   [-] REPO1,...|--all exec ...        execute a shell command in a repo context"
-	echo "   [-] REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
-	echo "   [-] REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
-	echo "   [-] REPO1,...|--all make-hardlinks  make hard links in .mgit/REPO"
-	echo
-	echo "   release [REL]                show a release or list releases"
-	echo "   release REL update [tag]     create/update a release based on HEADs"
-	echo "   release REL clone            clone/checkout all repos from a release"
-	echo "   release REL remove           remove a release file"
-	echo
-	echo "   [help|--help]                show this screen"
-	echo
+	say
+	say " multigit 4.0b - git wrapper for working with overlaid repos."
+	say " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
+	say
+	say " USAGE: mgit [OPTIONS...] COMMAND..."
+	say
+	say "   ls                           list cloned repos"
+	say "   ls-all                       list all known repos"
+	say "   ls-uncloned                  list all known but not cloned repos"
+	say
+	say "   ls-modified|st[atus]         list modified files across all repos"
+	say "   ls-unpushed                  list repos that are ahead of origin"
+	say "   ls-untracked                 list files untracked by any repo"
+	say "   ls-double-tracked            list files tracked by multiple repos"
+	say "   ls-tracked                   list files and which repos are tracking them"
+	say "   which FILENAME               list which repo(s) are tracking a file"
+	say
+	say "   init REPO                              create a local repo"
+	say "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
+	say "   clone-all                              clone all known uncloned repos"
+	say "   clone-release REL|RELFILE              clone/checkout all repos from a release (file)"
+	say "   remove REPO ...                        remove repos from disk (!)"
+	say "   convert [NAME]                         convert current git repo to mgit"
+	say
+	say "   baseurl [REMOTE [URL|-]]     get/set/delete the baseurl of a remote"
+	say "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
+	say
+	say "   [-] REPO1,...                       start a shell for using git on a repo"
+	say "   [-] REPO1,...|--all command ...     execute any git command on a repo"
+	say "   [-] REPO1,...|--all exec ...        execute a shell command in a repo context"
+	say "   [-] REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
+	say "   [-] REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
+	say "   [-] REPO1,...|--all make-hardlinks  make hard links in .mgit/REPO"
+	say
+	say "   release [REL]                show a release or list releases"
+	say "   release REL update [tag]     create/update a release based on HEADs"
+	say "   release REL clone            clone/checkout all repos from a release"
+	say "   release REL remove           remove a release file"
+	say
+	say "   bash                         drop to bash (even on Windows)"
+	say "   [help|--help]                show this screen"
+	say
+	say " OPTIONS:"
+	say
+	say "   -v                           verbose"
+	say "   --debug                      print commands"
+	say "   --dry                        don't actually remove stuff"
+	say "   --yes                        choose yes when asked to remove stuff"
+	say "   -SS                          reuse SSH connections (Linux only)"
+	say
 	# append any plugin help files
 	for f in .mgit/*.help; do
 		cat "$f"
 	done
-	echo
 	exit
 }
 
-check_root() { [ -d .mgit ] || usage "'.mgit' dir not found."; }
+check_root() { [ -d .mgit ] || die "'.mgit' dir not found."; }
 
 list_known() {
 	check_root
@@ -113,7 +118,7 @@ tracked_files() {
 }
 
 which_tracks() {
-	[ "$1" ] || usage "Filename expected."
+	[ "$1" ] || die "Filename expected."
 	list_tracked | while IFS=" " read repo file; do
 		[ "$file" = "$1" ] && echo "$repo"
 	done
@@ -169,32 +174,27 @@ clone_all() {
 }
 
 check_repo_name() {
-	[ "$1" ] || usage "Repo name expected."
+	[ "$1" ] || die "Repo name expected."
 	local name="$1"
 	name="${name//[^\.\-_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]/}"
-	[ "$name" = "$1" ] || \
-		usage "Invalid name: '$1'. Only letters, numbers, '.', '-' and '_' allowed."
+	[ "$name" = "$1" ] || die "Invalid name: '$1'. Only letters, numbers, '.', '-' and '_' allowed."
+	name="${name//^[\.\-]/}"
+	[ "$name" = "$1" ] || die "Invalid name: '$1'. Must not start with '.' or '-'."
 }
 
 init() {
 	check_repo_name "$1"
 	local name="$1"
 
-	# check that the repo is not already cloned
-	[ -d ".mgit/$name" ] && {
-		echo "SKIPPING: Already exists: '$name'."
-		return 1
-	}
+	[ -d ".mgit/$name" ] && die "Already cloned: '$name'."
 
-	mkdir -p ".mgit/$name"
+	must mkdir -p ".mgit/$name"
 	export GIT_DIR=".mgit/$name/.git"
-	git init $MULTIGIT_INIT_OPTS
-	git config core.worktree ../../..
+	must git init $MULTIGIT_INIT_OPTS >&2
+	must git config core.worktree ../../..
 
-	git config core.excludesfile ".mgit/$name.exclude"
-	make_exclude_file "$name"
-
-	return 0
+	must git config core.excludesfile ".mgit/$name.exclude"
+	must make_exclude_file "$name"
 }
 
 make_exclude_file() {
@@ -212,8 +212,10 @@ clone_one() {
 	local url
 	local ver
 
+	[ "$VERBOSE" ] && say "CLONE: $1"
+
 	arg="${arg//[[:blank:]]/}" # spaces not allowed
-	[ "$arg" = "$1" ] || usage "Invalid name '$name'."
+	[ "$arg" = "$1" ] || die "Invalid name '$name'."
 
 	# extract `=version` if any
 	ver="${arg##*=}"
@@ -232,26 +234,25 @@ clone_one() {
 		[ "$origin" = "$arg" ] && origin=""
 	fi
 
-	[ "$VERBOSE" ] && echo "@$name:"
-
 	# check that arg is not `/` or `origin/`
-	[ "$name" ] || usage "Invalid repo name '$1'."
+	[ "$name" ] || die "Invalid repo name '$1'."
 
+	export GIT_DIR=".mgit/$name/.git"
+
+	# if if repo is already cloned do a checkout instead.
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
 		local ver1="$ver"
 		[ "$ver1" ] || ver1="$(git_ver_for "$name" long origin/master)"
-		[ "$ver1" = "$ver0" ] && return
-		echo "PULL: $name $ver (was: $ver0)"
-		export GIT_DIR=".mgit/$name/.git"
-		git fetch $MULTIGIT_FETCH_OPTS
+		[ "$ver1" = "$ver0" ] && exit 0
+		say "PULL: $name $ver (was: $ver0)"
+		must git fetch $MULTIGIT_FETCH_OPTS
 		if [ "$ver" ]; then
-			git -c advice.detachedHead=false checkout "$ver"
+			must git -c advice.detachedHead=false checkout "$ver"
 		else
-			git checkout -B master origin/master
+			must git checkout -B master origin/master
 		fi
-		export GIT_DIR=
-		return 0
+		exit 0
 	}
 
 	# check for a registered origin
@@ -261,13 +262,10 @@ clone_one() {
 	# decide the origin
 	if [ "$origin" ]; then
 		[ "$rorigin" -a "$origin" != "$rorigin" ] && \
-			echo "NOTE:  Using different origin for '$name': '$origin' (was '$rorigin')."
+			say "NOTE:  Using different origin for '$name': '$origin' (was '$rorigin')."
 	else
 		origin="$rorigin"
-		[ "$origin" ] || {
-			echo "SKIPPING: Unknown repo '$name'."
-			return
-		}
+		[ "$origin" ] || die "Unknown repo '$name'."
 	fi
 
 	# find the origin url
@@ -280,110 +278,111 @@ clone_one() {
 			if [ "${origin#*:}" != "$origin" ]; then
 				url="$origin"
 			else
-				echo "ERROR: Unknown origin: '$origin' for '$name'."
-				echo "HINT:  To register '$origin' to be used as an origin, type, eg.:"
-				echo "HINT:    "$(basename "$0")" baseurl $origin https://github.com/$origin/"
-				return
+				say "ERROR: Unknown origin: '$origin' for '$name'."
+				say "HINT:  To register '$origin' to be used as an origin, type, eg.:"
+				say "HINT:    "$(basename "$0")" baseurl $origin https://github.com/$origin/"
+				exit 1
 			fi
 		fi
 	fi
 
 	# finally, clone the repo
-	no_exclude_file=1 init "$name" || return
-	git remote add origin "$url"
-	git fetch $MULTIGIT_FETCH_OPTS || {
+	(
+		no_exclude_file=1 must init "$name"
+		must git remote add origin "$url"
+		must git fetch $MULTIGIT_FETCH_OPTS
+	) || {
+		# cleanup on failed fetch because git doesn't.
 		rm -rf ".mgit/$name/"
-		rm ".mgit/$name.exclude"
-		echo "ERROR: Fetch failed. Repo removed."
-		return
+		rm -f ".mgit/$name.exclude"
+		die "Clone failed. Repo removed."
 	}
-	git branch --track master origin/master
-	git -c advice.detachedHead=false checkout $ver
+	must git branch --track master origin/master
+	must git -c advice.detachedHead=false checkout $ver
 
 	# make an exclude file if one wasn't checked out already.
-	make_exclude_file "$name"
+	must make_exclude_file "$name"
 
 	# (re)register the repo's origin.
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
-			echo "NOTE:  Updating origin for '$name': $origin"
-			echo "       (was: $rorigin)"
+			say "NOTE:  Updating origin for '$name': $origin"
+			say "       (was: $rorigin)"
 		else
-			echo "NOTE:  Adding origin for '$name': $origin"
-			echo "       (url: $url)"
+			say "NOTE:  Adding origin for '$name': $origin"
+			say "       (url: $url)"
 		fi
-		mkdir -p .mgit
-		echo "$origin" > ".mgit/$name.origin"
+		must mkdir -p .mgit
+		echo "$origin" > ".mgit/$name.origin" || die "Could not create file .mgit/$name.origin".
 	fi
 }
 
 clone() {
-	[ "$1" ] || usage "Repo name expected."
+	[ "$1" ] || die "Repo name expected."
 	if [ $# = 1 ]; then
-		clone_one "$@"
+		clone_one "$1"
 	else
 		while [ $# != 0 ]; do
-	   	clone_one "$1"
+	   	"$0" clone "$1"
 	   	shift
 	   done
 	fi
 }
 
-run() { if [ "$DRY_RUN" ]; then echo "$@"; else "$@"; fi; }
-
 remove_one() {
-	[ "$1" ] || usage "Invalid name '$1'."
+	[ "$1" ] || die "Invalid name '$1'."
 
 	[ -d ".mgit/$1/" ] || {
-		echo "ERROR: Repo not found '$1'."
+		say "ERROR: Repo not found '$1'."
 		return
 	}
 
 	# don't remove from a subshell
 	[ "$MULTIGIT_REPO" = "$1" ] && \
-		usage "Refusing to remove '$1' from a subshell."
+		die "Refusing to remove '$1' from a subshell."
 
 	# get tracked files for this repo
 	files="$(GIT_DIR=".mgit/$1/.git" git ls-files)" || {
-		echo "ERROR: Could not get the list of files for '$1'."
-		echo "HINT:  If you know that there are no checked out files,"
-		echo "HINT:  feel free to \`rm -rf .mgit/$1/ .mgit/$1.exclude\`."
+		say "ERROR: Could not get the list of files for '$1'."
+		say "HINT:  If you know that there are no checked out files,"
+		say "HINT:  feel free to \`rm -rf .mgit/$1/ .mgit/$1.exclude\`."
 		return
 	}
 
 	# ask for confirmation if there are files to delete
-	[ "$files" -a "$YES" = "" ] && {
+	[ "$files" -a -z "$YES" ] && {
 		local n=$(echo "$files" | wc -l)
-		echo "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
+		say "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
 		read yes
-		[ "$yes" = "yes" ] || { echo "Canceled."; return; }
+		[ "$yes" = "yes" ] || { say "Canceled."; return; }
 	}
 
 	# remove files
 	for file in $files; do
-		run rm "$file"
+		dry rm "$file"
 	done
 
 	# remove empty directories
 	for file in $files; do
 		echo "$(dirname "$file")"
 	done | uniq | while read dir; do
-		[ "$dir" != "." ] && run /bin/rmdir -p "$dir" 2>/dev/null
+		[ "$dir" != "." ] && dry /bin/rmdir -p "$dir" 2>/dev/null
 	done
 
 	# remove the git dir
-	run rm -rf ".mgit/$1/"
-	run rm  -f ".mgit/$1.exclude"
+	dry rm -rf ".mgit/$1/"
+	dry rm  -f ".mgit/$1.exclude"
 
-	echo "Removed: '$1'."
+	say "Removed: '$1'."
 }
 
 remove() {
-	[ "$1" ] || usage "Repo name expected."
+	[ "$1" ] || die "Repo name expected."
 	if [ $# = 1 ]; then
-		remove_one "$@"
+		remove_one "$1"
 	else
 		while [ $# != 0 ]; do
+			[ "$1" = "--yes" ] && { YES=1; shift; }
 	   	remove_one "$1"
 	   	shift
 	   done
@@ -394,14 +393,14 @@ convert() {
 	local name="$1"
 	[ "$name" ] || name="$(basename "$PWD")"
 	check_repo_name "$name"
-	[ -d "$PWD0/.git" ] || usage "No .git dir in current dir"
-	[ -d ".mgit/$name" ] && usage "Repo already exists: $name."
-	mkdir -p ".mgit/$name"
-	mv "$PWD0/.git" ".mgit/$name/.git"
+	[ -d "$PWD0/.git" ] || die "No .git dir in current dir"
+	[ -d ".mgit/$name" ] && die "Repo already exists: $name."
+	must mkdir -p ".mgit/$name"
+	must mv "$PWD0/.git" ".mgit/$name/.git"
 	export GIT_DIR=".mgit/$name/.git"
-	git config core.worktree ../../..
-	git config core.excludesfile ".mgit/$name.exclude"
-	make_exclude_file "$name"
+	must git config core.worktree ../../..
+	must git config core.excludesfile ".mgit/$name.exclude"
+	must make_exclude_file "$name"
 }
 
 baseurl() {
@@ -418,13 +417,13 @@ baseurl() {
 	# spaces not allowed
 	origin="${origin//[[:blank:]]/}"
 	url="${url//[[:blank:]]/}"
-	[ -z "$1" -o "$1" != "$origin" ] && usage "Invalid origin name '$1'."
-	[ "$2" -a "$2" != "$url" ] && usage "Invalid baseurl '$2'."
+	[ -z "$1" -o "$1" != "$origin" ] && die "Invalid origin name '$1'."
+	[ "$2" -a "$2" != "$url" ] && die "Invalid baseurl '$2'."
 
 	if [ "X$url" = "X-" ]; then
 		rm ".mgit/$origin.baseurl"
 	elif [ "$url" ]; then
-		[ "${url##*/}" != "" ] && usage "A base URL must end with a '/'."
+		[ "${url##*/}" != "" ] && die "A base URL must end with a '/'."
 		mkdir -p .mgit
 		echo "$url" > ".mgit/$origin.baseurl"
 	else
@@ -447,8 +446,8 @@ origin() {
 	# spaces not allowed
 	repo="${repo//[[:blank:]]/}"
 	origin="${origin//[[:blank:]]/}"
-	[ -z "$1" -o "$1" != "$repo" ] && usage "Invalid repo name '$1'."
-	[ "$2" -a "$2" != "$origin" ] && usage "Invalid origin '$2'."
+	[ -z "$1" -o "$1" != "$repo" ] && die "Invalid repo name '$1'."
+	[ "$2" -a "$2" != "$origin" ] && die "Invalid origin '$2'."
 
 	if [ "X$origin" = "X-" ]; then
 		rm ".mgit/$repo.origin"
@@ -469,7 +468,7 @@ list_releases() {
 }
 
 show_release() {
-	[ -f ".mgit/$1.release" ] || usage "Unknown release '$1'."
+	[ -f ".mgit/$1.release" ] || die "Unknown release '$1'."
 	cat ".mgit/$1.release"
 }
 
@@ -504,7 +503,7 @@ list_release_repos() {
 clone_release() {
 	local rel="$1"
 	[ "${rel##*.}" = "release" -a -f "$rel" ] || rel=".mgit/$rel.release"
-	[ -f "$rel" ] || usage "Release not found: '$1'."
+	[ -f "$rel" ] || die "Release not found: '$1'."
 
 	local s="$(cat "$rel")" # load it in memory to make sure we have it till the end.
 
@@ -514,22 +513,27 @@ clone_release() {
 	done
 
 	# step 2: clone/checkout repos present in the release.
-	echo "$s" | (IFS=" "; while read repo ver; do
-		# Version "*" in a release file specifies that the repo is already cloned
-		# and checked out: this is the repo that contains the release file itself.
-		# Even if cloned manually beforehand, the repo that contains the release file
-		# must still be listed in the release file to avoid removing it in step 1.
-		if [ "$ver" != "*" ]; then
-			"$0" clone "$repo=$ver"
-		fi
-	done)
+	echo "$s" | (
+		IFS=" "
+		local fail=0
+		while read repo ver; do
+			# Version "*" in a release file specifies that the repo is already cloned
+			# and checked out: this is the repo that contains the release file itself.
+			# Even if cloned manually beforehand, the repo that contains the release file
+			# must still be listed in the release file to avoid removing it in step 1.
+			if [ "$ver" != "*" ]; then
+				"$0" clone "$repo=$ver" || fail=1
+			fi
+		done
+		exit $fail
+	)
 }
 
 release() {
 	local rel="$1"
 	local cmd="$2"
 	rel="${rel//[[:blank:]]/}" # spaces not allowed
-	[ "$rel" -a "$1" != "$rel" ] && usage "Invalid release name '$1'."
+	[ "$rel" -a "$1" != "$rel" ] && die "Invalid release name '$1'."
 	[ "$rel" ] || { list_releases; return; }
 	shift 2
 	case "$cmd" in
@@ -537,16 +541,16 @@ release() {
 		update)   update_release "$rel" "$@" ;;
 		clone)    clone_release "$rel" "$@" ;;
 		remove)   remove_release "$rel" "$@" ;;
-		*)        usage "Invalid release command '$cmd'."
+		*)        die "Invalid release command '$cmd'."
 	esac
 }
 
 git_shell() {
 	cd "$PWD0" || return
-	echo "Entering subshell: git commands will affect the repo '$MULTIGIT_REPO'."
-	echo "Type \`exit' to exit subshell."
+	say "Entering subshell: git commands will affect the repo '$MULTIGIT_REPO'."
+	say "Type \`exit' to exit subshell."
 	git status -s
-	echo
+	say
 	if [ "$OSTYPE" = "msys" ]; then
 		export PROMPT="[$MULTIGIT_REPO] \$P\$G"
 		"$COMSPEC" /k
@@ -574,7 +578,7 @@ git_version() {
 }
 
 git_remove_links() {
-	[ "$OSTYPE" = "msys" ] && usage "Not for Windows."
+	[ "$OSTYPE" = "msys" ] && die "Not for Windows."
 	([ "$MULTIGIT_REPO" ] && cd ".mgit/$MULTIGIT_REPO" || exit 1
 	find . ! -path './.git/*' ! -path './.git' ! -path '.' -exec rm -rf {} \; 2>/dev/null)
 }
@@ -597,10 +601,10 @@ git_cmd_one() {
 	local repo="$1"
 	local cmd="$2"
 	shift 2
-	[ "$VERBOSE" ] && echo "@$repo:"
+	[ "$VERBOSE" ] && say "@$repo:"
 	export GIT_DIR="$PWD/.mgit/$repo/.git"
 	export MULTIGIT_REPO="$repo"
-	[ -d "$GIT_DIR" ] || usage "Unknown repo: '$repo'."
+	[ -d "$GIT_DIR" ] || die "Unknown repo: '$repo'."
 	case "$cmd" in
 		exec)           cd "$PWD0" && "$@" ;;
 		ver)            git_ver "$@" ;;
@@ -617,14 +621,12 @@ git_cmd_one() {
 			fi
 		;;
 	esac
-	export GIT_DIR=
-	export MULTIGIT_REPO=
 }
 
 git_cmd() {
 	local repos="$1"; shift
 	if [ "$repos" = "--all" ]; then
-		[ "$1" ] || usage "Refusing to start a subshell for each repo."
+		[ "$1" ] || die "Refusing to start a subshell for each repo."
 		for repo in `list_cloned`; do
 			git_cmd_one "$repo" "$@"
 		done
@@ -633,7 +635,7 @@ git_cmd() {
 			git_cmd_one "$repo" "$@"
 		done)
 	fi
-	[ "$1" = "ver" ] && echo
+	[ "$1" = "ver" ] && say
 }
 
 cd_root() {
@@ -641,7 +643,7 @@ cd_root() {
 	while [ "$PWD" != "$pwd1" ]; do
 		[ -d .mgit ] && return
 		pwd1="$PWD"
-		cd .. || usage "Could not cd to '$PWD/..'."
+		cd .. || die "Could not cd to '$PWD/..'."
 	done
 	cd "$PWD0" # root dir not found, go back to initial dir
 }
@@ -651,11 +653,12 @@ cd_root
 
 while true; do
 	case "$1" in
-		-v)    export VERBOSE=1; shift ;;
-		--dry) export DRY_RUN=1; shift ;;
-		--yes) export YES=1; shift ;;
-		-SS)   export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
-		*)     break ;;
+		-v)       export VERBOSE=1; shift ;;
+		--debug)  export DEBUG=1; shift ;;
+		--dry)    export DRY=1; shift ;;
+		--yes)    export YES=1; shift ;;
+		-SS)      export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
+		*)        break ;;
 	esac
 done
 cmd="$1"; shift
@@ -683,6 +686,7 @@ case "$cmd" in
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
+	bash)         exec bash "$@" ;;
 	-)            git_cmd "$@" ;;
 	*)
 		# look for and execute a plugin command
