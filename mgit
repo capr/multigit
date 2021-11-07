@@ -246,11 +246,11 @@ clone_one() {
 		[ "$ver1" ] || ver1="$(git_ver_for "$name" long origin/master)"
 		[ "$ver1" = "$ver0" ] && exit 0
 		say "PULL: $name $ver (was: $ver0)"
-		must git fetch $MULTIGIT_FETCH_OPTS
+		must git fetch $MULTIGIT_FETCH_OPTS >&2
 		if [ "$ver" ]; then
-			must git -c advice.detachedHead=false checkout "$ver"
+			must git -c advice.detachedHead=false checkout "$ver" >&2
 		else
-			must git checkout -B master origin/master
+			must git checkout -B master origin/master >&2
 		fi
 		exit 0
 	}
@@ -290,15 +290,15 @@ clone_one() {
 	(
 		no_exclude_file=1 must init "$name"
 		must git remote add origin "$url"
-		must git fetch $MULTIGIT_FETCH_OPTS
+		must git fetch $MULTIGIT_FETCH_OPTS >&2
 	) || {
 		# cleanup on failed fetch because git doesn't.
 		rm -rf ".mgit/$name/"
 		rm -f ".mgit/$name.exclude"
 		die "Clone failed. Repo removed."
 	}
-	must git branch --track master origin/master
-	must git -c advice.detachedHead=false checkout $ver
+	must git branch --track master origin/master >&2
+	must git -c advice.detachedHead=false checkout $ver >&2
 
 	# make an exclude file if one wasn't checked out already.
 	must make_exclude_file "$name"
