@@ -242,9 +242,10 @@ clone_one() {
 	# if if repo is already cloned do a checkout instead.
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
-		local ver1="$ver"
-		[ "$ver1" ] || ver1="$(git_ver_for "$name" long origin/master)"
-		[ "$ver1" = "$ver0" ] && exit 0
+		[ "$ver" -a "$ver" = "$ver0" ] && {
+			[ "$VERBOSE" ] && say "SKIPPING: Already at $ver"
+			exit 0
+		}
 		say "PULL: $name $ver (was: $ver0)"
 		must git fetch $MULTIGIT_FETCH_OPTS >&2
 		if [ "$ver" ]; then
