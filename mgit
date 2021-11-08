@@ -243,7 +243,7 @@ clone_one() {
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
 		[ "$ver" -a "$ver" = "$ver0" ] && {
-			[ "$VERBOSE" ] && say "SKIPPING: Already at $ver"
+			[ "$VERBOSE" ] && say "SKIP:  $name already at $ver"
 			exit 0
 		}
 		say "PULL:  $name $ver (was: $ver0)"
@@ -263,7 +263,7 @@ clone_one() {
 	# decide the origin
 	if [ "$origin" ]; then
 		[ "$rorigin" -a "$origin" != "$rorigin" ] && \
-			say "NOTE:  Using different origin for '$name': '$origin' (was '$rorigin')."
+			say "NOTE:  $name using different origin: '$origin' (was '$rorigin')."
 	else
 		origin="$rorigin"
 		[ "$origin" ] || die "Unknown repo '$name'."
@@ -279,7 +279,7 @@ clone_one() {
 			if [ "${origin#*:}" != "$origin" ]; then
 				url="$origin"
 			else
-				say "ABORT: Unknown origin: '$origin' for '$name'."
+				say "ABORT: $name has unknown origin: '$origin'."
 				say "HINT:  To register '$origin' to be used as an origin, type, eg.:"
 				say "HINT:    "$(basename "$0")" baseurl $origin https://github.com/$origin/"
 				exit 1
@@ -308,10 +308,10 @@ clone_one() {
 	# (re)register the repo's origin.
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
-			say "NOTE:  Updating origin for '$name': $origin (was: $rorigin)"
+			say "NOTE:  $name has new origin: '$origin' (was: '$rorigin')"
 		else
 			[ "$VERBOSE" ] && {
-				say "NOTE:  Adding origin for '$name': $origin"
+				say "NOTE:  $name has origin: '$origin'"
 				say "       (url: $url)"
 			}
 		fi
@@ -334,8 +334,7 @@ clone() {
 }
 
 remove_one() {
-
-	[ "$VERBOSE" ] && say "REMOVE: $1"
+	[ "$VERBOSE" ] && say "@$1:"
 
 	[ -d ".mgit/$1/" ] || die "Repo not found: '$1'."
 
@@ -374,6 +373,7 @@ remove_one() {
 	dry rm -rf ".mgit/$1/"
 	dry rm  -f ".mgit/$1.exclude"
 
+	say "REMOVED: $1"
 }
 
 remove() {
@@ -407,6 +407,7 @@ convert() {
 	must git config core.worktree ../../..
 	must git config core.excludesfile ".mgit/$name.exclude"
 	must make_exclude_file "$name"
+	say "CONVERTED: $1"
 }
 
 baseurl() {
