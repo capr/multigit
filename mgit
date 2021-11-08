@@ -4,11 +4,11 @@ IFS=$'\n\b'
 
 # die hard, see https://github.com/capr/die
 say()   { echo "$@" >&2; }
-die()   { echo -n "EXIT: " >&2; echo "$@" >&2; exit 1; }
+die()   { echo -n "ABORT: " >&2; echo "$@" >&2; exit 1; }
 debug() { [ "$DEBUG" ] && echo "$@" >&2; }
 run()   { debug -n "EXEC: $@ "; "$@"; local ret=$?; debug "[$ret]"; return $ret; }
 must()  { debug -n "MUST: $@ "; "$@"; local ret=$?; debug "[$ret]"; [ $ret == 0 ] || die "$@ [$ret]"; }
-dry()   { if [ "$DRY" ]; then say "$@"; else "$@"; fi; }
+dry()   { if [ "$DRY" ]; then [ "$VERBOSE" ] && say "$@"; else "$@"; fi; }
 
 usage() {
 	say
@@ -279,7 +279,7 @@ clone_one() {
 			if [ "${origin#*:}" != "$origin" ]; then
 				url="$origin"
 			else
-				say "ERROR: Unknown origin: '$origin' for '$name'."
+				say "ABORT: Unknown origin: '$origin' for '$name'."
 				say "HINT:  To register '$origin' to be used as an origin, type, eg.:"
 				say "HINT:    "$(basename "$0")" baseurl $origin https://github.com/$origin/"
 				exit 1
@@ -331,23 +331,20 @@ clone() {
 }
 
 remove_one() {
-	[ "$1" ] || die "Invalid name '$1'."
 
-	[ -d ".mgit/$1/" ] || {
-		say "ERROR: Repo not found '$1'."
-		return
-	}
+	[ "$VERBOSE" ] && say "REMOVE: $1"
+
+	[ -d ".mgit/$1/" ] || die "Repo not found: '$1'."
 
 	# don't remove from a subshell
-	[ "$MULTIGIT_REPO" = "$1" ] && \
-		die "Refusing to remove '$1' from a subshell."
+	[ "$MULTIGIT_REPO" = "$1" ] && die "Refusing to remove '$1' from a subshell."
 
 	# get tracked files for this repo
 	files="$(GIT_DIR=".mgit/$1/.git" git ls-files)" || {
-		say "ERROR: Could not get the list of files for '$1'."
+		say "ABORT: Could not get the list of files for '$1'."
 		say "HINT:  If you know that there are no checked out files,"
 		say "HINT:  feel free to \`rm -rf .mgit/$1/ .mgit/$1.exclude\`."
-		return
+		exit 1
 	}
 
 	# ask for confirmation if there are files to delete
@@ -355,7 +352,7 @@ remove_one() {
 		local n=$(echo "$files" | wc -l)
 		say "Remove ALL $((n)) files of '$1'? You can't undo this [yes/N]"
 		read yes
-		[ "$yes" = "yes" ] || { say "Canceled."; return; }
+		[ "$yes" = "yes" ] || { say "Canceled."; exit 1; }
 	}
 
 	# remove files
@@ -374,7 +371,6 @@ remove_one() {
 	dry rm -rf ".mgit/$1/"
 	dry rm  -f ".mgit/$1.exclude"
 
-	say "Removed: '$1'."
 }
 
 remove() {
@@ -382,9 +378,15 @@ remove() {
 	if [ $# = 1 ]; then
 		remove_one "$1"
 	else
+		while true; do
+			case "$1" in
+				--dry)    export DRY=1; shift ;;
+				--yes)    export YES=1; shift ;;
+				*)        break ;;
+			esac
+		done
 		while [ $# != 0 ]; do
-			[ "$1" = "--yes" ] && { YES=1; shift; }
-	   	remove_one "$1"
+			"$0" remove "$1"
 	   	shift
 	   done
 	fi
