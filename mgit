@@ -307,14 +307,16 @@ clone_one() {
 	# (re)register the repo's origin.
 	if [ "$origin" != "$rorigin" ]; then
 		if [ "$rorigin" ]; then
-			say "NOTE:  Updating origin for '$name': $origin"
-			say "       (was: $rorigin)"
+			say "NOTE:  Updating origin for '$name': $origin (was: $rorigin)"
 		else
-			say "NOTE:  Adding origin for '$name': $origin"
-			say "       (url: $url)"
+			[ "$VERBOSE" ] && {
+				say "NOTE:  Adding origin for '$name': $origin"
+				say "       (url: $url)"
+			}
 		fi
 		must mkdir -p .mgit
-		echo "$origin" > ".mgit/$name.origin" || die "Could not create file .mgit/$name.origin".
+		echo "$origin" > ".mgit/$name.origin" \
+			|| die "Could not create origin file .mgit/$name.origin".
 	fi
 }
 
