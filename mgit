@@ -662,7 +662,7 @@ while true; do
 		--debug)  export DEBUG=1; shift ;;
 		--dry)    export DRY=1; shift ;;
 		--yes)    export YES=1; shift ;;
-		-SS)      export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=600 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
+		-SS)      export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=60 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
 		*)        break ;;
 	esac
 done
