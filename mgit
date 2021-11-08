@@ -212,7 +212,7 @@ clone_one() {
 	local url
 	local ver
 
-	[ "$VERBOSE" ] && say "CLONE: $1"
+	[ "$VERBOSE" ] && say "@$1:"
 
 	arg="${arg//[[:blank:]]/}" # spaces not allowed
 	[ "$arg" = "$1" ] || die "Invalid name '$name'."
@@ -246,7 +246,7 @@ clone_one() {
 			[ "$VERBOSE" ] && say "SKIPPING: Already at $ver"
 			exit 0
 		}
-		say "PULL: $name $ver (was: $ver0)"
+		say "PULL:  $name $ver (was: $ver0)"
 		must git fetch -q $MULTIGIT_FETCH_OPTS >&2
 		if [ "$ver" ]; then
 			must git -c advice.detachedHead=false checkout -q "$ver" >&2
@@ -289,6 +289,7 @@ clone_one() {
 
 	# finally, clone the repo
 	(
+		say "CLONE: $name $ver"
 		no_exclude_file=1 must init "$name"
 		must git remote add origin "$url"
 		must git fetch -q $MULTIGIT_FETCH_OPTS >&2
