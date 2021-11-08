@@ -407,7 +407,7 @@ convert() {
 	must git config core.worktree ../../..
 	must git config core.excludesfile ".mgit/$name.exclude"
 	must make_exclude_file "$name"
-	say "CONVERTED: $1"
+	say "CONVERTED: $name"
 }
 
 baseurl() {
