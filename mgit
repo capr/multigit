@@ -212,8 +212,6 @@ clone_one() {
 	local url
 	local ver
 
-	[ "$VERBOSE" ] && say "@$1:"
-
 	arg="${arg//[[:blank:]]/}" # spaces not allowed
 	[ "$arg" = "$1" ] || die "$name is an invalid name"
 
@@ -334,7 +332,6 @@ clone() {
 }
 
 remove_one() {
-	[ "$VERBOSE" ] && say "@$1:"
 
 	[ -d ".mgit/$1/" ] || die "$1 is not a cloned repo"
 
