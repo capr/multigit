@@ -398,7 +398,7 @@ convert() {
 	check_repo_name "$name"
 	[ -d ".mgit/$name" ] && {
 		[ -d "$PWD0/.git" ] && die "$name already taken"
-		[ "$VERBOSE" ] && "SKIP:  $name already in multigit"
+		[ "$VERBOSE" ] && say "SKIP:  $name already in multigit"
 		exit 0
 	}
 	[ -d "$PWD0/.git" ] || die "No .git dir in current dir"
