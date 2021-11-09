@@ -215,7 +215,7 @@ clone_one() {
 	[ "$VERBOSE" ] && say "@$1:"
 
 	arg="${arg//[[:blank:]]/}" # spaces not allowed
-	[ "$arg" = "$1" ] || die "Invalid name '$name'."
+	[ "$arg" = "$1" ] || die "$name is an invalid name"
 
 	# extract `=version` if any
 	ver="${arg##*=}"
@@ -235,7 +235,7 @@ clone_one() {
 	fi
 
 	# check that arg is not `/` or `origin/`
-	[ "$name" ] || die "Invalid repo name '$1'."
+	[ "$name" ] || die "$name is an invalid name"
 
 	export GIT_DIR=".mgit/$name/.git"
 
@@ -266,7 +266,7 @@ clone_one() {
 			say "NOTE:  $name using different origin: '$origin' (was '$rorigin')."
 	else
 		origin="$rorigin"
-		[ "$origin" ] || die "Unknown repo '$name'."
+		[ "$origin" ] || die "$name has no origin file"
 	fi
 
 	# find the origin url
@@ -297,7 +297,7 @@ clone_one() {
 		# cleanup on failed fetch because git doesn't.
 		rm -rf ".mgit/$name/"
 		rm -f ".mgit/$name.exclude"
-		die "Clone failed. Repo removed."
+		die "$name clone failed"
 	}
 	must git branch -q --track master origin/master >&2
 	must git -c advice.detachedHead=false checkout -q $ver >&2
@@ -336,7 +336,7 @@ clone() {
 remove_one() {
 	[ "$VERBOSE" ] && say "@$1:"
 
-	[ -d ".mgit/$1/" ] || die "Repo not found: '$1'."
+	[ -d ".mgit/$1/" ] || die "$1 is not a cloned repo"
 
 	# don't remove from a subshell
 	[ "$MULTIGIT_REPO" = "$1" ] && die "Refusing to remove '$1' from a subshell."
@@ -399,8 +399,12 @@ convert() {
 	local name="$1"
 	[ "$name" ] || name="$(basename "$PWD")"
 	check_repo_name "$name"
+	[ -d ".mgit/$name" ] && {
+		[ -d "$PWD0/.git" ] && die "$name already taken"
+		[ "$VERBOSE" ] && "SKIP:  $name already in multigit"
+		exit 0
+	}
 	[ -d "$PWD0/.git" ] || die "No .git dir in current dir"
-	[ -d ".mgit/$name" ] && die "Repo already exists: $name."
 	must mkdir -p ".mgit/$name"
 	must mv "$PWD0/.git" ".mgit/$name/.git"
 	export GIT_DIR=".mgit/$name/.git"
@@ -660,12 +664,12 @@ cd_root
 
 while true; do
 	case "$1" in
-		-v)       export VERBOSE=1; shift ;;
-		--debug)  export DEBUG=1; shift ;;
-		--dry)    export DRY=1; shift ;;
-		--yes)    export YES=1; shift ;;
-		-SS)      export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=60 -o ControlPath=~/.ssh/sock-%r@%h-%p"; shift ;;
-		*)        break ;;
+		-v)       shift; export VERBOSE=1;;
+		--debug)  shift; export DEBUG=1;;
+		--dry)    shift; export DRY=1;;
+		--yes)    shift; export YES=1;;
+		-SS)      shift; export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=10 -o ControlPath=~/.ssh/sock-%r@%h-%p";;
+		*)        break;;
 	esac
 done
 cmd="$1"; shift
