@@ -29,7 +29,7 @@ put it somewhere in your PATH, or you can clone it everywhere
 you want to create a multigit project in, and call it as `./mgit`
 (or `mgit` on Windows).
 
-### Quick install on Linux
+### Quick install/upgrade on Linux
 
 	sudo wget -O /usr/local/bin/mgit https://raw.githubusercontent.com/capr/mgit/master/mgit
 	sudo chmod a+x /usr/local/bin/mgit
