@@ -12,7 +12,7 @@ dry()   { if [ "$DRY" ]; then [ "$VERBOSE" ] && say "$@"; else "$@"; fi; }
 
 usage() {
 	say
-	say " multigit 4.0b - git wrapper for working with overlaid repos."
+	say " multigit 4.1b - git wrapper for working with overlaid repos."
 	say " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	say
 	say " USAGE: mgit [OPTIONS...] COMMAND ..."
@@ -297,9 +297,14 @@ clone_one() {
 		rm -f ".mgit/$name.exclude"
 		die "$name clone failed"
 	}
-	must git branch -q --track master origin/master >&2
-	must git -c advice.detachedHead=false checkout -q $ver >&2
-
+	if run git rev-parse -q --verify origin/master >/dev/null; then
+		run git branch -q --track master origin/master >&2
+		must git -c advice.detachedHead=false checkout -q $ver >&2
+	else # new repo
+		must git checkout -q -b master
+		git config branch.master.remote origin
+		git config branch.master.merge refs/heads/master
+	fi
 	# make an exclude file if one wasn't checked out already.
 	must make_exclude_file "$name"
 
