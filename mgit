@@ -7,7 +7,7 @@ say()   { echo "$@" >&2; }
 die()   { echo -n "ABORT: " >&2; echo "$@" >&2; exit 1; }
 debug() { [ "$DEBUG" ] && echo "$@" >&2; }
 run()   { debug -n "EXEC: $@ "; "$@"; local ret=$?; debug "[$ret]"; return $ret; }
-must()  { debug -n "MUST: $@ "; "$@"; local ret=$?; debug "[$ret]"; [ $ret == 0 ] || die "$@ [$ret]"; }
+must()  { debug -n "MUST: $@ "; "$@"; local ret=$?; debug "[$ret]"; [ $ret = 0 ] || die "$@ [$ret]"; }
 dry()   { if [ "$DRY" ]; then [ "$VERBOSE" ] && say "$@"; else "$@"; fi; }
 
 usage() {
@@ -241,7 +241,7 @@ clone_one() {
 	[ -d ".mgit/$name" ] && {
 		local ver0="$(git_ver_for "$name")"
 		[ "$ver" -a "$ver" = "$ver0" ] && {
-			[ "$VERBOSE" ] && say "SKIP:  $name already at $ver"
+			[ "$VERBOSE" ] && printf "SKIP: %-16s already at %s\n" "$name" "$ver"
 			exit 0
 		}
 		printf "PULL:  %-16s %-7s %s\n" "$name" "$ver" "(was: $ver0)" >&2
@@ -480,14 +480,20 @@ list_releases() {
 	done
 }
 
+release_file() {
+	local rel="$1"
+	[ "$rel" ] || die "Release name or file expected."
+	[ "${rel##*.}" = "release" -a -f "$rel" ] || rel=".mgit/$rel.release"
+	[ "$2" = "nocheck" -o -f "$rel" ] || die "Release not found: '$1'."
+	echo "$rel"
+}
+
 show_release() {
-	[ -f ".mgit/$1.release" ] || die "Unknown release '$1'."
-	cat ".mgit/$1.release"
+	local f; f="$(release_file "$1")" || exit; cat "$f"
 }
 
 update_release() {
-	local rel="$1"
-	[ -f "$rel" ] || rel=".mgit/$rel.release"
+	local rel; rel="$(release_file "$1" nocheck)" || exit
 	if [ -f "$rel" ]; then
 		local s="$(cat "$rel")"
 		echo "$s" | (IFS=" "; while read repo ver0; do
@@ -503,26 +509,22 @@ update_release() {
 }
 
 remove_release() {
-	rm ".mgit/$1.release"
+	local f; f="$(release_file "$1")" || exit; rm "$f"
 }
 
 list_release_repos() {
-	cat "$RELEASE" | (IFS=" "; while read repo ver; do
+	printf "%s\n" "$RELEASE" | (IFS=" "; while read repo ver; do
 		local name="${repo##*/}"
 		echo "$name"
 	done)
 }
 
 clone_release() {
-	local rel="$1"
-	[ "$rel" ] || die "Release name or file expected."
-	[ "${rel##*.}" = "release" -a -f "$rel" ] || rel=".mgit/$rel.release"
-	[ -f "$rel" ] || die "Release not found: '$1'."
-
+	local rel; rel="$(release_file "$1")" || exit
 	local s="$(cat "$rel")" # load it in memory to make sure we have it till the end.
 
 	# step 1: remove any repos that are not part of the release.
-	RELEASE="$rel" list_sub list_cloned list_release_repos | while read repo; do
+	RELEASE="$s" list_sub list_cloned list_release_repos | while read repo; do
 		"$0" --yes remove "$repo"
 	done
 
@@ -551,9 +553,9 @@ release() {
 	[ "$rel" ] || { list_releases; return; }
 	shift 2
 	case "$cmd" in
-		"")       show_release "$rel" "$@" ;;
+		"")       show_release   "$rel" "$@" ;;
 		update)   update_release "$rel" "$@" ;;
-		clone)    clone_release "$rel" "$@" ;;
+		clone)    clone_release  "$rel" "$@" ;;
 		remove)   remove_release "$rel" "$@" ;;
 		*)        die "Invalid release command '$cmd'."
 	esac
