@@ -39,7 +39,7 @@ usage() {
 	say "   origin [REPO [REMOTE|URL|-]] get/set/delete the known origin of a repo"
 	say
 	say "   [-] REPO1,...                       start a shell for using git on a repo"
-	say "   [-] REPO1,...|--all command ...     execute any git command on a repo"
+	say "   [-] REPO1,...|--all COMMAND ...     execute any git command on a repo"
 	say "   [-] REPO1,...|--all exec ...        execute a shell command in a repo context"
 	say "   [-] REPO1,...|--all ver[sion] [tag] show repo version or tag (as enum or list)"
 	say "   [-] REPO1,...|--all make-symlinks   make symbolic links in .mgit/REPO"
@@ -60,6 +60,7 @@ usage() {
 	say "   --dry                        don't actually remove stuff"
 	say "   --yes                        choose yes when asked to remove stuff"
 	say "   -SS                          reuse SSH connections (Linux only)"
+	say "   -P N                         number of parallel processes for clone (1)"
 	say
 	# append any plugin help files
 	for f in .mgit/*.help; do
@@ -324,15 +325,21 @@ clone_one() {
 	fi
 }
 
+clone_from_stdin() {
+	xargs -i -P "$MAXPROC" -- "$0" clone "{}"
+}
+
 clone() {
 	[ "$1" ] || die "Repo name expected."
-	if [ $# = 1 ]; then
+	if [ "x$1" = "x-" ]; then
+		clone_from_stdin
+	elif [ $# = 1 ]; then
 		clone_one "$1"
 	else
 		while [ $# != 0 ]; do
-	   	"$0" clone "$1"
-	   	shift
-	   done
+			printf "%s\n" "$1"
+			shift
+		done | clone_from_stdin
 	fi
 }
 
@@ -392,8 +399,8 @@ remove() {
 		done
 		while [ $# != 0 ]; do
 			"$0" remove "$1"
-	   	shift
-	   done
+			shift
+		done
 	fi
 }
 
@@ -515,7 +522,7 @@ remove_release() {
 list_release_repos() {
 	printf "%s\n" "$RELEASE" | (IFS=" "; while read repo ver; do
 		local name="${repo##*/}"
-		echo "$name"
+		printf "%s\n" "$name"
 	done)
 }
 
@@ -529,20 +536,17 @@ clone_release() {
 	done
 
 	# step 2: clone/checkout repos present in the release.
-	echo "$s" | (
-		IFS=" "
-		local fail=0
-		while read repo ver; do
+	printf "%s\n" "$s" | (IFS=" "; while read repo ver; do
 			# Version "*" in a release file specifies that the repo is already cloned
 			# and checked out: this is the repo that contains the release file itself.
 			# Even if cloned manually beforehand, the repo that contains the release file
 			# must still be listed in the release file to avoid removing it in step 1.
 			if [ "$ver" != "*" ]; then
-				"$0" clone "$repo=$ver" || fail=1
+				printf "%s\n" "$repo=$ver"
 			fi
 		done
-		exit $fail
-	)
+	) | "$0" clone -
+	[ $? = 0 ] || die "Failed."
 }
 
 release() {
@@ -673,11 +677,13 @@ while true; do
 		--debug)  shift; export DEBUG=1;;
 		--dry)    shift; export DRY=1;;
 		--yes)    shift; export YES=1;;
-		-SS)      shift; [ "$OSTYPE" != "msys" ] && export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=10 -o ControlPath=~/.ssh/sock-%r@%h-%p";;
+		-SS)      shift; [ "$OSTYPE" != "msys" ] && export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=10 -o ControlPath=~/.ssh/sock-mgit";;
+		-P)       shift; export MAXPROC="$1"; shift;;
 		*)        break;;
 	esac
 done
 [ "$DEBUG" ] || export GITOPT=-q
+[ "$MAXPROC" ] || export MAXPROC=1
 cmd="$1"; shift
 case "$cmd" in
 	"")           usage ;;
@@ -689,7 +695,7 @@ case "$cmd" in
 	ls-modified)  list_modified "$@" ;;
 	st)           list_modified "$@" ;;
 	status)       list_modified "$@" ;;
-	which)	      which_tracks "$@" ;;
+	which)        which_tracks "$@" ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
