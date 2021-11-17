@@ -12,7 +12,7 @@ dry()   { if [ "$DRY" ]; then [ "$VERBOSE" ] && say "$@"; else "$@"; fi; }
 
 usage() {
 	say
-	say " multigit 4.1b - git wrapper for working with overlaid repos."
+	say " multigit 4.2b - git wrapper for working with overlaid repos."
 	say " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	say
 	say " USAGE: mgit [OPTIONS...] COMMAND ..."
@@ -190,7 +190,7 @@ init() {
 
 	must mkdir -p ".mgit/$name"
 	export GIT_DIR=".mgit/$name/.git"
-	must git init -q $MULTIGIT_INIT_OPTS >&2
+	must git init $GITOPT $MULTIGIT_INIT_OPTS >&2
 	must git config core.worktree ../../..
 
 	must git config core.excludesfile ".mgit/$name.exclude"
@@ -244,12 +244,12 @@ clone_one() {
 			[ "$VERBOSE" ] && say "SKIP:  $name already at $ver"
 			exit 0
 		}
-		say "PULL:  $name $ver (was: $ver0)"
-		must git fetch -q $MULTIGIT_FETCH_OPTS >&2
+		printf "PULL:  %-16s %-7s %s\n" "$name" "$ver" "(was: $ver0)" >&2
+		must git fetch $GITOPT $MULTIGIT_FETCH_OPTS >&2
 		if [ "$ver" ]; then
-			must git -c advice.detachedHead=false checkout -q "$ver" >&2
+			must git -c advice.detachedHead=false checkout $GITOPT "$ver" >&2
 		else
-			must git checkout -q -B master origin/master >&2
+			must git checkout $GITOPT -B master origin/master >&2
 		fi
 		exit 0
 	}
@@ -287,21 +287,21 @@ clone_one() {
 
 	# finally, clone the repo
 	(
-		say "CLONE: $name $ver"
+		printf "CLONE: %-16s %s\n" "$name" "$ver" >&2
 		no_exclude_file=1 must init "$name"
 		must git remote add origin "$url"
-		must git fetch -q $MULTIGIT_FETCH_OPTS >&2
+		must git fetch $GITOPT $MULTIGIT_FETCH_OPTS >&2
 	) || {
 		# cleanup on failed fetch because git doesn't.
 		rm -rf ".mgit/$name/"
 		rm -f ".mgit/$name.exclude"
 		die "$name clone failed"
 	}
-	if run git rev-parse -q --verify origin/master >/dev/null; then
-		run git branch -q --track master origin/master >&2
-		must git -c advice.detachedHead=false checkout -q $ver >&2
+	if run git rev-parse $GITOPT --verify origin/master >/dev/null; then
+		run git branch $GITOPT --track master origin/master >&2
+		must git -c advice.detachedHead=false checkout $GITOPT $ver >&2
 	else # new repo
-		must git checkout -q -b master
+		must git checkout $GITOPT -b master
 		git config branch.master.remote origin
 		git config branch.master.merge refs/heads/master
 	fi
@@ -515,6 +515,7 @@ list_release_repos() {
 
 clone_release() {
 	local rel="$1"
+	[ "$rel" ] || die "Release name or file expected."
 	[ "${rel##*.}" = "release" -a -f "$rel" ] || rel=".mgit/$rel.release"
 	[ -f "$rel" ] || die "Release not found: '$1'."
 
@@ -670,10 +671,11 @@ while true; do
 		--debug)  shift; export DEBUG=1;;
 		--dry)    shift; export DRY=1;;
 		--yes)    shift; export YES=1;;
-		-SS)      shift; export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=10 -o ControlPath=~/.ssh/sock-%r@%h-%p";;
+		-SS)      shift; [ "$OSTYPE" != "msys" ] && export GIT_SSH_COMMAND="ssh -o ControlMaster=auto -o ControlPersist=10 -o ControlPath=~/.ssh/sock-%r@%h-%p";;
 		*)        break;;
 	esac
 done
+[ "$DEBUG" ] || export GITOPT=-q
 cmd="$1"; shift
 case "$cmd" in
 	"")           usage ;;
