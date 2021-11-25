@@ -331,7 +331,7 @@ clone_from_stdin() {
 
 clone() {
 	[ "$1" ] || die "Repo name expected."
-	if [ "x$1" = "x-" ]; then
+	if [ "$1" = "-" ]; then
 		clone_from_stdin
 	elif [ $# = 1 ]; then
 		clone_one "$1"
@@ -709,7 +709,7 @@ case "$cmd" in
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
-	bash)         exec bash "$@" ;;
+	bash)         cd "$PWD0" && exec bash "$@" ;;
 	-)            git_cmd "$@" ;;
 	*)
 		# look for and execute a plugin command
