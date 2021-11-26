@@ -121,7 +121,9 @@ tracked_files() {
 which_tracks() {
 	[ "$1" ] || die "Filename expected."
 	list_cloned | while IFS=" " read repo; do
+		# xargs -i -P "$MAXPROC" -- 
 		[ "$(GIT_DIR=".mgit/$repo/.git" git ls-files "$1")" = "$1" ] && echo "$repo"
+		# [ "$file" = "$1" ] && echo "$repo"
 	done
 }
 
