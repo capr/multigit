@@ -121,7 +121,7 @@ tracked_files() {
 which_tracks() {
 	[ "$1" ] || die "Filename expected."
 	list_cloned | while IFS=" " read repo; do
-		[ "$(GIT_DIR=".mgit/$repo/.git" git ls-files "$1")" = "$1" ] && echo "$repo"
+		GIT_DIR=".mgit/$repo/.git" git ls-files --error-unmatch "$1" >/dev/null 2>/dev/null && echo "$repo"
 	done
 }
 
