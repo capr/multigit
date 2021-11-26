@@ -118,10 +118,19 @@ tracked_files() {
 	done) | sort | uniq $1
 }
 
+which_on() { # repo file
+	GIT_DIR=".mgit/$1/.git" git ls-files --error-unmatch "$2" >/dev/null 2>/dev/null || return 1
+	echo "$1"
+}
+
 which_tracks() {
 	[ "$1" ] || die "Filename expected."
+	local guess1="${1%.*}"
+	local guess2="${1%_*}"
+	[ "$guess1" != "$1" -a -d ".mgit/$guess1/.git" ] && which_on "$guess1" "$1" && return 
+	[ "$guess2" != "$1" -a -d ".mgit/$guess2/.git" ] && which_on "$guess2" "$1" && return 
 	list_cloned | while IFS=" " read repo; do
-		GIT_DIR=".mgit/$repo/.git" git ls-files --error-unmatch "$1" >/dev/null 2>/dev/null && echo "$repo"
+		which_on "$repo" "$1" && break
 	done
 }
 
