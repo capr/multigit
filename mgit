@@ -27,6 +27,7 @@ usage() {
 	say "   ls-double-tracked            list files tracked by multiple repos"
 	say "   ls-tracked                   list files and which repos are tracking them"
 	say "   which FILENAME               list which repo(s) are tracking a file"
+	say "   diff FILENAME                call git diff FILENAME on FILENAME's repo"
 	say
 	say "   init REPO                              create a local repo"
 	say "   clone [REMOTE/]REPO|URL[=VERSION] ...  clone one ore more repos"
@@ -125,13 +126,21 @@ which_on() { # repo file
 
 which_tracks() {
 	[ "$1" ] || die "Filename expected."
-	local guess1="${1%.*}"
-	local guess2="${1%_*}"
-	[ "$guess1" != "$1" -a -d ".mgit/$guess1/.git" ] && which_on "$guess1" "$1" && return 
-	[ "$guess2" != "$1" -a -d ".mgit/$guess2/.git" ] && which_on "$guess2" "$1" && return 
+	local s="${1##*/}"  # strip path
+	local s="${s##*\\}" # strip path
+	local guess1="${s%.*}" # strip .suffix
+	local guess2="${s%_*}" # strip _suffix
+	[ "$guess1" != "$1" -a -d ".mgit/$guess1/.git" ] && which_on "$guess1" "$1" && return 0
+	[ "$guess2" != "$1" -a -d ".mgit/$guess2/.git" ] && which_on "$guess2" "$1" && return 0
 	list_cloned | while IFS=" " read repo; do
-		which_on "$repo" "$1" && break
+		which_on "$repo" "$1" && return 0
 	done
+	return 1
+}
+
+diff_file() {
+	local repo="$(which_tracks "$1")" || return 1
+	"$0" "$repo" diff "$1"
 }
 
 existing_files() {
@@ -705,6 +714,7 @@ case "$cmd" in
 	st)           list_modified "$@" ;;
 	status)       list_modified "$@" ;;
 	which)        which_tracks "$@" ;;
+	diff)         diff_file "$@" ;;
 	ls-unpushed)  list_unpushed ;;
 	ls-untracked) list_untracked ;;
 	ls-double-tracked) list_double_tracked ;;
