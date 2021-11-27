@@ -140,7 +140,7 @@ which_tracks() {
 
 diff_file() {
 	local repo="$(which_tracks "$1")" || return 1
-	"$0" "$repo" diff "$1"
+	"$0" "$repo" diff "$@"
 }
 
 existing_files() {
