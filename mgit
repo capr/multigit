@@ -139,7 +139,8 @@ which_tracks() {
 }
 
 diff_file() {
-	local repo="$(which_tracks "$1")" || return 1
+	local file="${@: -1}"
+	local repo="$(which_tracks "$file")" || return 1
 	"$0" "$repo" diff "$@"
 }
 
@@ -589,7 +590,7 @@ git_shell() {
 	say "Type \`exit' to exit subshell."
 	git status -s
 	say
-	if [ "$OSTYPE" = "msys" ]; then
+	if [ "$OSTYPE" = "msys" -a "$MULTIGIT_USE_CMD" ]; then
 		export PROMPT="[$MULTIGIT_REPO] \$P\$G"
 		"$COMSPEC" /k
 	else
@@ -728,7 +729,7 @@ case "$cmd" in
 	baseurl)      baseurl "$@" ;;
 	origin)       origin "$@" ;;
 	release)      release "$@" ;;
-	bash)         cd "$PWD0" && exec bash "$@" ;;
+	bash)         cd "$PWD0" && exec bash --norc "$@" ;;
 	-)            git_cmd "$@" ;;
 	*)
 		# look for and execute a plugin command

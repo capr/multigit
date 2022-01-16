@@ -25,14 +25,21 @@ and module management could be useful:
 ## How do I install it?
 
 Multigit is a simple shell script with no dependencies. You can either
-put it somewhere in your PATH, or you can clone it everywhere
-you want to create a multigit project in, and call it as `./mgit`
-(or `mgit` on Windows).
+put it somewhere in your `$PATH`, or you can clone it _as your project folder_,
+and call it as `./mgit` (or `mgit` on Windows) from inside that folder.
 
 ### Quick install/upgrade on Linux
 
 	sudo wget -O /usr/local/bin/mgit https://raw.githubusercontent.com/capr/mgit/master/mgit
 	sudo chmod a+x /usr/local/bin/mgit
+
+### Quick install/upgrade on Windows
+
+Open the following two files in your browser and save them in
+`C:\Program Files\Git\cmd` (or other location in your `PATH`):
+
+	https://raw.githubusercontent.com/capr/mgit/master/mgit
+	https://raw.githubusercontent.com/capr/mgit/master/mgit.cmd
 
 ### Tab completion in Bash
 
@@ -280,6 +287,7 @@ various tasks:
 
   * `$MULTIGIT_FETCH_OPTS` will be expanded and passed to `git fetch`
   * `$MULTIGIT_INIT_OPTS` will be expanded and passed to `git init`
+  * `$MULTIGIT_USE_CMD=1` use `cmd.exe` as a subshell on Windows instead of `bash`.
 
 ## Limitations
 
