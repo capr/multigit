@@ -12,7 +12,7 @@ dry()   { if [ "$DRY" ]; then [ "$VERBOSE" ] && say "$@"; else "$@"; fi; }
 
 usage() {
 	say
-	say " multigit 4.4b - git wrapper for working with overlaid repos."
+	say " multigit 5.0 - git wrapper for working with overlaid repos."
 	say " Cosmin Apreutesei | public domain | https://github.com/capr/multigit"
 	say
 	say " USAGE: mgit [OPTIONS...] COMMAND ..."
